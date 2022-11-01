@@ -30,6 +30,7 @@ public class TestSheetAnalyzer {
         DepGraphType depGraphType = MainTestUtil.fromStringToDepGraphType(args[2]);
         boolean isDollar = args[3].equals("True");
         boolean isGap = args[4].equals("True");
+        boolean isTypeSensitive = false;
 
         String statPath = args[1];
         File inputFile = new File(args[0]);
@@ -70,7 +71,7 @@ public class TestSheetAnalyzer {
                     String filePath = file.getAbsolutePath();
                     try {
                         SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression,
-                                depGraphType, isDollar, isGap);
+                                depGraphType, isDollar, isGap, isTypeSensitive);
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException | OpenXML4JRuntimeException e) {
                         System.out.println(e);

@@ -2,6 +2,7 @@ package org.dataspread.sheetanalyzer.dependency.util;
 
 import com.github.davidmoten.rtree.geometry.Rectangle;
 import com.github.davidmoten.rtree.geometry.internal.RectangleFloat;
+import org.dataspread.sheetanalyzer.util.Pair;
 import org.dataspread.sheetanalyzer.util.Ref;
 import org.dataspread.sheetanalyzer.util.RefImpl;
 
@@ -12,6 +13,42 @@ public class PatternTools {
     public final static int DEAULT_SHIFT_STEP = 1;
     private final static int FIRST_ROW = 0;
     private final static int FIRST_COL = 0;
+
+    public static Pair<Offset, Offset> computeOffset(Ref prec,
+                                                     Ref dep,
+                                                     PatternType compType) {
+        Offset startOffset;
+        Offset endOffset;
+
+        assert(compType != PatternType.NOTYPE);
+        switch (compType) {
+            case TYPEZERO:
+            case TYPEONE:
+            case TYPEFIVE:
+            case TYPESIX:
+            case TYPESEVEN:
+            case TYPEEIGHT:
+            case TYPENINE:
+            case TYPETEN:
+            case TYPEELEVEN:
+                startOffset = RefUtils.refToOffset(prec, dep, true);
+                endOffset = RefUtils.refToOffset(prec, dep, false);
+                break;
+            case TYPETWO:
+                startOffset = RefUtils.refToOffset(prec, dep, true);
+                endOffset = Offset.noOffset;
+                break;
+            case TYPETHREE:
+                startOffset = Offset.noOffset;
+                endOffset = RefUtils.refToOffset(prec, dep, false);
+                break;
+            default: // TYPEFOUR
+                startOffset = Offset.noOffset;
+                endOffset = Offset.noOffset;
+        }
+
+        return new Pair<>(startOffset, endOffset);
+    }
 
     public static Rectangle getRectangleFromRef(Ref ref) {
         return RectangleFloat.create(ref.getRow(),ref.getColumn(),
@@ -188,13 +225,12 @@ public class PatternTools {
         return findAdjacencyDirection(adjRef, ref, shiftStep) != Direction.NODIRECTION;
     }
 
-    public static Set<Ref> findUpdateDepRef(Ref prec, Ref dep,
-                                       EdgeMeta edgeMeta, Ref precRange) {
-        Set<Ref> retSet = new HashSet<>();
-        int row = -1;
-        int col = -1;
-        int lastRow = -1;
-        int lastCol = -1;
+    public static Set<RefWithMeta> findUpdateDepRefWithMeta(Ref prec, RefWithMeta depRefWithMeta, Ref precRange) {
+        Set<RefWithMeta> refWithMetaSet = new HashSet<>();
+        EdgeMeta edgeMeta = depRefWithMeta.getEdgeMeta();
+        Ref dep = depRefWithMeta.getRef();
+
+        int row, col, lastRow, lastCol;
 
         int startRowOffset = edgeMeta.startOffset.getRowOffset();
         int startColOffset = edgeMeta.startOffset.getColOffset();
@@ -206,10 +242,12 @@ public class PatternTools {
         int inputLastRow = precRange.getLastRow();
         int inputLastCol = precRange.getLastColumn();
 
-        if (dep.getColumn() == dep.getLastColumn()) { // Column-wise
+        if (dep.getColumn() == dep.getLastColumn()) {
+            // Column-wise
             inputCol = prec.getColumn();
             inputLastCol = prec.getLastColumn();
-        } else { // Row-wise
+        } else {
+            // Row-wise
             inputRow = prec.getRow();
             inputLastRow = prec.getLastRow();
         }
@@ -217,38 +255,24 @@ public class PatternTools {
         PatternType patternType;
         if (edgeMeta.patternType != PatternType.TYPEZERO)
             patternType = edgeMeta.patternType;
-        else { // TYPEZERO
+        else {
+            // TYPEZERO
             if (startRowOffset == 1 || startColOffset == 1) patternType = PatternType.TYPETHREE;
             else if (startRowOffset == -1 || startColOffset == -1) patternType = PatternType.TYPETWO;
             else throw new RuntimeException("TYPE ZERO offset (" + startRowOffset + ","
                         + startColOffset + ") wrong");
         }
 
+        if (patternType.ordinal() >= 5 && patternType.ordinal() <= 11) {
+            return refWithMetaSet;
+        }
+
         switch (patternType) {
             case TYPEONE: // relative start, relative end
-            case TYPEFIVE:
-            case TYPESIX:
-            case TYPESEVEN:
-            case TYPEEIGHT:
-            case TYPENINE:
-            case TYPETEN:
-            case TYPEELEVEN:
                 row = inputRow + endRowOffset;
                 col = inputCol + endColOffset;
                 lastRow = inputLastRow + startRowOffset;
                 lastCol = inputLastCol + startColOffset;
-                if (patternType != PatternType.TYPEONE) {
-                    int gapSize = patternType.ordinal() - PatternType.TYPEFIVE.ordinal() + 1;
-                    retSet = findRefSetForGapType(prec.getBookName(), prec.getSheetName(),
-                            Math.max(row, dep.getRow()),
-                            Math.max(col, dep.getColumn()),
-                            Math.min(lastRow, dep.getLastRow()),
-                            Math.min(lastCol, dep.getLastColumn()),
-                            dep.getRow(), dep.getColumn(),
-                            dep.getLastRow(), dep.getLastColumn(),
-                            gapSize);
-                    return retSet;
-                }
                 break;
 
             case TYPETWO: // relative start, fixed end
@@ -265,8 +289,9 @@ public class PatternTools {
                 lastCol = dep.getLastColumn();
                 break;
 
-            default: //case TYPEFOUR: fixed start, fixed end
-                     //case NOTYPE
+            default:
+                // TYPEFOUR: fixed start, fixed end
+                // NOTYPE
                 row = dep.getRow();
                 col = dep.getColumn();
                 lastRow = dep.getLastRow();
@@ -280,9 +305,12 @@ public class PatternTools {
                 prec.getBookName(),
                 prec.getSheetName(),
                 row, col, lastRow, lastCol).getOverlap(dep);
-        retSet.add(result);
+        Pair<Offset, Offset> offsetPair = computeOffset(precRange, result, patternType);
+        EdgeMeta newEdgeMeta = new EdgeMeta(patternType, offsetPair.first, offsetPair.second);
+        RefWithMeta refWithMeta = new RefWithMeta(result, newEdgeMeta);
+        refWithMetaSet.add(refWithMeta);
 
-        return retSet;
+        return refWithMetaSet;
     }
 
     public static Set<Ref> findRefSetForGapType(String bookName,
@@ -307,6 +335,74 @@ public class PatternTools {
             assert(false);
         }
         return refSet;
+    }
+
+    public static RefWithMeta findUpdatePrecRefWithMeta(Ref dep, RefWithMeta precRefWithMeta,
+                                                        Ref depRange, boolean isDirect) {
+        EdgeMeta edgeMeta = precRefWithMeta.getEdgeMeta();
+        Ref prec = precRefWithMeta.getRef();
+
+        int row = -1;
+        int col = -1;
+        int lastRow = -1;
+        int lastCol = -1;
+
+        int startRowOffset = edgeMeta.startOffset.getRowOffset();
+        int startColOffset = edgeMeta.startOffset.getColOffset();
+        int endRowOffset = edgeMeta.endOffset.getRowOffset();
+        int endColOffset = edgeMeta.endOffset.getColOffset();
+
+        PatternType patternType;
+        if (edgeMeta.patternType != PatternType.TYPEZERO)
+            patternType = edgeMeta.patternType;
+        else { // TYPEZERO
+            if (isDirect) patternType = PatternType.TYPEONE;
+            else if (startRowOffset == 1 || startColOffset == 1) patternType = PatternType.TYPETHREE;
+            else if (startRowOffset == -1 || startColOffset == -1) patternType = PatternType.TYPETWO;
+            else throw new RuntimeException("TYPE ZERO offset (" + startRowOffset + ","
+                        + startColOffset + ") wrong");
+        }
+
+        switch (patternType) {
+
+            case TYPEONE: // relative start, relative end
+                row = depRange.getRow() - startRowOffset;
+                col = depRange.getColumn() - startColOffset;
+                lastRow = depRange.getLastRow() - endRowOffset;
+                lastCol = depRange.getLastColumn() - endColOffset;
+                break;
+
+            case TYPETWO: // relative start, fixed end
+                row = depRange.getRow() - startRowOffset;
+                col = depRange.getColumn() - startColOffset;
+                lastRow = prec.getLastRow();
+                lastCol = prec.getLastColumn();
+                break;
+
+            case TYPETHREE: // fixed start, relative end
+                row = prec.getRow();
+                col = prec.getColumn();
+                lastRow = depRange.getLastRow() - endRowOffset;
+                lastCol = depRange.getLastColumn() - endColOffset;
+                break;
+
+            default: // TYPEFOUR: fixed start, fixed end
+                // NOTYPE
+                row = prec.getRow();
+                col = prec.getColumn();
+                lastRow = prec.getLastRow();
+                lastCol = prec.getLastColumn();
+                break;
+        }
+
+        Ref result = new RefImpl(
+                prec.getBookName(),
+                prec.getSheetName(),
+                row, col, lastRow, lastCol).getOverlap(prec);
+        Pair<Offset, Offset> offsetPair = computeOffset(result, depRange, patternType);
+        EdgeMeta newEdgeMeta = new EdgeMeta(patternType, offsetPair.first, offsetPair.second);
+        RefWithMeta refWithMeta = new RefWithMeta(result, newEdgeMeta);
+        return refWithMeta;
     }
 
     public static Ref findUpdatePrecRef(Ref prec, Ref dep,

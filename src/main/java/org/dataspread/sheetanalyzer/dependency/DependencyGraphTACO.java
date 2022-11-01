@@ -25,12 +25,6 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
     // {prec: [[A, B, C], [E, F], [F]}
     protected HashMap<Ref, List<RefWithMeta>> depToPrecList = new HashMap<>();
 
-    /*
-    public HashMap<Ref, List<RefWithMeta>> getPrecToDepList() {
-        return precToDepList;
-    }
-     */
-
     protected Comparator<RefWithMeta> horizontalCp = new Comparator<RefWithMeta>() {
         @Override
         public int compare(RefWithMeta o1, RefWithMeta o2) {
@@ -70,25 +64,39 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
     }
 
     public Set<Ref> getDependents(Ref precedent) {
-        Set<Ref> results = new HashSet<>();
-        HashMap<Ref, Set<Ref>> internalResults = getDependents(precedent, false);
-        for (Ref ref: internalResults.keySet()) {
-            results.addAll(internalResults.get(ref));
+        HashMap<Ref, List<RefWithMeta>> results = getDependents(precedent, false);
+        Set<Ref> depSet = new HashSet<>();
+        for (Ref prec: results.keySet()) {
+            List<RefWithMeta> depWithMetaList = results.get(prec);
+            for (RefWithMeta depWithMeta: depWithMetaList) {
+                depSet.add(depWithMeta.getRef());
+            }
         }
-        return results;
+        return depSet;
     }
 
-    public HashMap<Ref, Set<Ref>> getDependents(Ref precedent, boolean isDirectDep) {
-        HashMap<Ref, Set<Ref>> results = new HashMap<>();
+    public Set<Ref> getPrecedents(Ref dependent) {
+        HashMap<Ref, List<RefWithMeta>> results = getPrecedents(dependent, false);
+        Set<Ref> precSet = new HashSet<>();
+        for (Ref dep: results.keySet()) {
+            List<RefWithMeta> precWithMetaList = results.get(dep);
+            for (RefWithMeta precWithMeta: precWithMetaList) {
+                precSet.add(precWithMeta.getRef());
+            }
+        }
+        return precSet;
+    }
+
+    public HashMap<Ref, List<RefWithMeta>> getDependents(Ref precedent, boolean isDirectDep) {
+        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
         if (RefUtils.isValidRef(precedent)) {
             results = getDependentsInternal(precedent, isDirectDep);
         }
         return results;
     }
 
-    private HashMap<Ref, Set<Ref>> getDependentsInternal(Ref precedent, boolean isDirectDep) {
-        HashMap<Ref, Set<Ref>> results = new HashMap<>();
-        AtomicReference<RTree<Ref, Rectangle>> resultSet = new AtomicReference<>(RTree.create());
+    private HashMap<Ref, List<RefWithMeta>> getDependentsInternal(Ref precedent, boolean isDirectDep) {
+        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(precedent);
         while (!updateQueue.isEmpty()) {
@@ -96,28 +104,24 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
             Iterator<Ref> refIter = findOverlappingRefs(updateRef);
             Set<Ref> visited = new HashSet<>();
             while (refIter.hasNext()) {
-                Ref precRef = refIter.next();
-                if (!visited.contains(precRef)) {
-                    visited.add(precRef);
-                    Ref realUpdateRef = updateRef.getOverlap(precRef);
-                    findDeps(precRef).forEach(depRefWithMeta -> {
-                        Set<Ref> depUpdateRefSet = findUpdateDepRef(precRef, depRefWithMeta.getRef(),
-                                depRefWithMeta.getEdgeMeta(), realUpdateRef);
-                        for (Ref depRef: depUpdateRefSet) {
-                            LinkedList<Ref> overlapRef = getNonOverlapRef(resultSet.get(), depRef);
-                            Set<Ref> tempResults = new HashSet<>();
-                            for (Ref olRef: overlapRef) {
-                                resultSet.set(resultSet.get().add(olRef, RefUtils.refToRect(olRef)));
-                                tempResults.add(olRef);
-                                if (!isDirectDep) {
-                                    updateQueue.add(olRef);
-                                }
+                Ref overlappingPrecRef = refIter.next();
+                if (!visited.contains(overlappingPrecRef)) {
+                    visited.add(overlappingPrecRef);
+                    Ref realUpdateRef = updateRef.getOverlap(overlappingPrecRef);
+                    findDeps(overlappingPrecRef).forEach(depRefWithMeta -> {
+                        Set<RefWithMeta> depUpdateRefSet = findUpdateDepRefWithMeta(overlappingPrecRef,
+                                depRefWithMeta, realUpdateRef);
+                        List<RefWithMeta> tempResults = new ArrayList<>();
+                        for (RefWithMeta depRef : depUpdateRefSet) {
+                            tempResults.add(depRef);
+                            if (!isDirectDep) {
+                                updateQueue.add(depRef.getRef());
                             }
-                            if (!tempResults.isEmpty()) {
-                                Set<Ref> oldResults = results.getOrDefault(realUpdateRef, new HashSet<>());
-                                oldResults.addAll(tempResults);
-                                results.put(realUpdateRef, oldResults);
-                            }
+                        }
+                        if (!tempResults.isEmpty()) {
+                            List<RefWithMeta> oldResults = results.getOrDefault(updateRef, new ArrayList<>());
+                            oldResults.addAll(tempResults);
+                            results.put(updateRef, oldResults);
                         }
                     });
                 }
@@ -126,37 +130,16 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
         return results;
     }
 
-    /*
-    private void updateResult(LinkedHashSet<Ref> result, boolean isDirectDep, AtomicReference<RTree<Ref, Rectangle>> resultSet, Queue<Ref> updateQueue, Ref depUpdateRef) {
-        LinkedList<Ref> overlapRef = getNonOverlapRef(resultSet.get(), depUpdateRef);
-        overlapRef.forEach(olRef -> {
-            resultSet.set(resultSet.get().add(olRef, RefUtils.refToRect(olRef)));
-            result.add(olRef);
-            if (!isDirectDep) updateQueue.add(olRef);
-        });
-    }
-     */
-
-    public Set<Ref> getPrecedents(Ref dependent) {
-        Set<Ref> results = new HashSet<>();
-        HashMap<Ref, Set<Ref>> internalResults = getPrecedents(dependent, false);
-        for (Ref ref: internalResults.keySet()) {
-            results.addAll(internalResults.get(ref));
-        }
-        return results;
-    }
-
-    public HashMap<Ref, Set<Ref>> getPrecedents(Ref dependent, boolean isDirectPrec) {
-        HashMap<Ref, Set<Ref>> results = new HashMap<>();
+    public HashMap<Ref, List<RefWithMeta>> getPrecedents(Ref dependent, boolean isDirectPrec) {
+        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
         if (RefUtils.isValidRef(dependent)) {
             results = getPrecedentsInternal(dependent, isDirectPrec);
         }
         return results;
     }
 
-    private HashMap<Ref, Set<Ref>> getPrecedentsInternal(Ref dependent, boolean isDirectPrec) {
-        HashMap<Ref, Set<Ref>> results = new HashMap<>();
-        AtomicReference<RTree<Ref, Rectangle>> resultSet = new AtomicReference<>(RTree.create());
+    private HashMap<Ref, List<RefWithMeta>> getPrecedentsInternal(Ref dependent, boolean isDirectPrec) {
+        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(dependent);
         while (!updateQueue.isEmpty()) {
@@ -164,27 +147,19 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
             Iterator<Ref> refIter = findOverlappingRefs(updateRef);
             Set<Ref> visited = new HashSet<>();
             while (refIter.hasNext()) {
-                Ref depRef = refIter.next();
-                if (!visited.contains(depRef)) {
-                    visited.add(depRef);
-                    Ref realUpdateRef = updateRef.getOverlap(depRef);
-                    findPrecs(depRef).forEach(precRefWithMeta -> {
-                        Ref precUpdateRef = findUpdatePrecRef(depRef, precRefWithMeta.getRef(),
-                                precRefWithMeta.getEdgeMeta(), realUpdateRef, isDirectPrec);
-                        LinkedList<Ref> overlapRef = getNonOverlapRef(resultSet.get(), precUpdateRef);
-                        Set<Ref> tempResults = new HashSet<>();
-                        for (Ref olRef: overlapRef) {
-                            resultSet.set(resultSet.get().add(olRef, RefUtils.refToRect(olRef)));
-                            tempResults.add(olRef);
-                            if (!isDirectPrec) {
-                                updateQueue.add(olRef);
-                            }
+                Ref overlappingDepRef = refIter.next();
+                if (!visited.contains(overlappingDepRef)) {
+                    visited.add(overlappingDepRef);
+                    Ref realUpdateRef = updateRef.getOverlap(overlappingDepRef);
+                    findPrecs(overlappingDepRef).forEach(precRefWithMeta -> {
+                        RefWithMeta precUpdateRef = findUpdatePrecRefWithMeta(overlappingDepRef, precRefWithMeta,
+                                realUpdateRef, isDirectPrec);
+                        if (!isDirectPrec) {
+                            updateQueue.add(precUpdateRef.getRef());
                         }
-                        if (!tempResults.isEmpty()) {
-                            Set<Ref> oldResults = results.getOrDefault(realUpdateRef, new HashSet<>());
-                            oldResults.addAll(tempResults);
-                            results.put(realUpdateRef, oldResults);
-                        }
+                        List<RefWithMeta> oldResults = results.getOrDefault(updateRef, new ArrayList<>());
+                        oldResults.add(precUpdateRef);
+                        results.put(updateRef, oldResults);
                     });
                 }
             }
@@ -563,7 +538,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
     }
 
     private Iterable<RefWithMeta> findDeps(Ref prec) {
-        List<RefWithMeta> depIter = null;
+        List<RefWithMeta> depIter;
         depIter = precToDepList.getOrDefault(prec, new LinkedList<>());
         return depIter;
     }
@@ -618,42 +593,6 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
         }
 
         return refList;
-    }
-
-    private Pair<Offset, Offset> computeOffset(Ref prec,
-                                               Ref dep,
-                                               PatternType compType) {
-        Offset startOffset;
-        Offset endOffset;
-
-        assert(compType != PatternType.NOTYPE);
-        switch (compType) {
-            case TYPEZERO:
-            case TYPEONE:
-            case TYPEFIVE:
-            case TYPESIX:
-            case TYPESEVEN:
-            case TYPEEIGHT:
-            case TYPENINE:
-            case TYPETEN:
-            case TYPEELEVEN:
-                startOffset = RefUtils.refToOffset(prec, dep, true);
-                endOffset = RefUtils.refToOffset(prec, dep, false);
-                break;
-            case TYPETWO:
-                startOffset = RefUtils.refToOffset(prec, dep, true);
-                endOffset = Offset.noOffset;
-                break;
-            case TYPETHREE:
-                startOffset = Offset.noOffset;
-                endOffset = RefUtils.refToOffset(prec, dep, false);
-                break;
-            default: // TYPEFOUR
-                startOffset = Offset.noOffset;
-                endOffset = Offset.noOffset;
-        }
-
-        return new Pair<>(startOffset, endOffset);
     }
 
     private CompressInfo findCompressionPatternWithGap(Ref prec, Ref dep,

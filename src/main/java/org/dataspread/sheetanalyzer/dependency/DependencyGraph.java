@@ -3,7 +3,6 @@ package org.dataspread.sheetanalyzer.dependency;
 import org.dataspread.sheetanalyzer.util.Pair;
 import org.dataspread.sheetanalyzer.util.Ref;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
 
