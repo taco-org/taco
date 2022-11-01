@@ -8,6 +8,7 @@ import org.dataspread.sheetanalyzer.dependency.DependencyGraphTACO;
 import org.dataspread.sheetanalyzer.dependency.util.DepGraphType;
 import org.dataspread.sheetanalyzer.dependency.util.PatternType;
 import org.dataspread.sheetanalyzer.dependency.util.RefUtils;
+import org.dataspread.sheetanalyzer.dependency.util.RefWithMeta;
 import org.dataspread.sheetanalyzer.util.*;
 
 import java.io.PrintWriter;
@@ -121,7 +122,8 @@ public class MainTestUtil {
         String filePath = fileDir + "/" + fileName;
 
         try {
-            SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression, depGraphType, isDollar, isGap);
+            SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression, depGraphType,
+                    isDollar, isGap, true);
             long graphBuildTime = sheetAnalyzer.getGraphBuildTimeCost();
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append(fileName).append(",")
@@ -132,29 +134,25 @@ public class MainTestUtil {
             String sheetName = refLoc.split(":")[0];
             Ref targetRef = RefUtils.fromStringToCell(refLoc);
 
-            // Set<Ref> result, processedResult;
-            HashMap<Ref, Set<Ref>> result, processedResult;
-            long lookupSize = 0, lookupTime = 0, lookupPostSize = 0, lookupPostTime = 0;
+            HashMap<Ref, List<RefWithMeta>> result;
+            long lookupSize = 0, lookupTime = 0;
             DependencyGraph depGraph = sheetAnalyzer.getDependencyGraphs().get(sheetName);
 
             long start = System.currentTimeMillis();
-            // result = depGraph.getDependents(targetRef);
             result = ((DependencyGraphTACO)depGraph).getDependents(targetRef, false);
             for (Ref ref: result.keySet()) {
-                System.out.println(ref + " " + result.get(ref));
+                System.out.print("Ref: " + ref + " Deps: ");
+                for (RefWithMeta refWithMeta: result.get(ref)) {
+                    System.out.print(refWithMeta.getRef() + " ");
+                }
+                System.out.print("\n");
             }
             lookupSize = result.size();
             lookupTime = System.currentTimeMillis() - start;
-            //processedResult = RefUtils.postProcessRefSet(result);
-            //lookupPostSize = processedResult.size();
-            lookupPostSize = result.size();
-            lookupPostTime = System.currentTimeMillis() - start;
 
             stringBuilder = new StringBuilder();
             stringBuilder.append(lookupSize).append(",")
-                    .append(lookupTime).append(",")
-                    .append(lookupPostSize).append(",")
-                    .append(lookupPostTime).append("\n");
+                    .append(lookupTime).append("\n");
             statPW.write(stringBuilder.toString());
         } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException e) {
             System.out.println(e.getMessage());

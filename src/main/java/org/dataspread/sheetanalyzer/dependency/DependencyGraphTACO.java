@@ -96,7 +96,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
     }
 
     private HashMap<Ref, List<RefWithMeta>> getDependentsInternal(Ref precedent, boolean isDirectDep) {
-        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
+        HashMap<Ref, Set<RefWithMeta>> results = new HashMap<>();
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(precedent);
         while (!updateQueue.isEmpty()) {
@@ -119,7 +119,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                             }
                         }
                         if (!tempResults.isEmpty()) {
-                            List<RefWithMeta> oldResults = results.getOrDefault(updateRef, new ArrayList<>());
+                            Set<RefWithMeta> oldResults = results.getOrDefault(updateRef, new HashSet<>());
                             oldResults.addAll(tempResults);
                             results.put(updateRef, oldResults);
                         }
@@ -127,7 +127,12 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                 }
             }
         }
-        return results;
+        HashMap<Ref, List<RefWithMeta>> finalResult = new HashMap<>();
+        for (Ref ref: results.keySet()) {
+            List<RefWithMeta> depList = new ArrayList<>(results.get(ref));
+            finalResult.put(ref, depList);
+        }
+        return finalResult;
     }
 
     public HashMap<Ref, List<RefWithMeta>> getPrecedents(Ref dependent, boolean isDirectPrec) {
@@ -139,7 +144,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
     }
 
     private HashMap<Ref, List<RefWithMeta>> getPrecedentsInternal(Ref dependent, boolean isDirectPrec) {
-        HashMap<Ref, List<RefWithMeta>> results = new HashMap<>();
+        HashMap<Ref, Set<RefWithMeta>> results = new HashMap<>();
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(dependent);
         while (!updateQueue.isEmpty()) {
@@ -157,14 +162,19 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                         if (!isDirectPrec) {
                             updateQueue.add(precUpdateRef.getRef());
                         }
-                        List<RefWithMeta> oldResults = results.getOrDefault(updateRef, new ArrayList<>());
+                        Set<RefWithMeta> oldResults = results.getOrDefault(updateRef, new HashSet<>());
                         oldResults.add(precUpdateRef);
                         results.put(updateRef, oldResults);
                     });
                 }
             }
         }
-        return results;
+        HashMap<Ref, List<RefWithMeta>> finalResult = new HashMap<>();
+        for (Ref ref: results.keySet()) {
+            List<RefWithMeta> precList = new ArrayList<>(results.get(ref));
+            finalResult.put(ref, precList);
+        }
+        return finalResult;
     }
 
     private Boolean isContained(RTree<Ref, Rectangle> resultSet, Ref input) {
