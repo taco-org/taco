@@ -10,10 +10,8 @@ import org.apache.poi.ss.formula.ptg.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFEvaluationWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xmlgraphics.util.dijkstra.Edge;
 import org.dataspread.sheetanalyzer.util.*;
 import org.dataspread.sheetanalyzer.dependency.util.EdgeType;
-import org.w3c.dom.Attr;
 
 import java.io.File;
 import java.io.IOException;
@@ -256,21 +254,6 @@ public class POIParser implements SpreadsheetParser {
                 return areaRef;
             } else if (token instanceof RefPtg) {
                 RefPtg ptg = (RefPtg) token;
-
-                /*
-                String content = ptg.toFormulaString();
-                int first_d_loc = -1, second_d_loc = -1;
-                first_d_loc = content.indexOf("$");
-                if (first_d_loc != -1) {
-                    if (first_d_loc == 0) {
-                        second_d_loc = content.indexOf("$", first_d_loc + 1);
-                    } else {
-                        second_d_loc = first_d_loc;
-                        first_d_loc = -1;
-                    }
-                }
-                */
-
                 int row = ptg.getRow();
                 int col = ptg.getColumn();
                 Cell dep = this.getCellAt(sheet, row, col);

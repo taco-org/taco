@@ -2,7 +2,7 @@ package org.dataspread.sheetanalyzer.mainTest;
 
 import org.apache.poi.ss.usermodel.*;
 import org.dataspread.sheetanalyzer.SheetAnalyzer;
-import org.dataspread.sheetanalyzer.dependency.util.DepGraphType;
+import org.dataspread.sheetanalyzer.analyzer.SheetAnalyzerImpl;
 import org.dataspread.sheetanalyzer.dependency.util.PatternType;
 import org.dataspread.sheetanalyzer.util.SheetNotSupportedException;
 
@@ -15,6 +15,8 @@ import java.util.List;
 
 public class SheetTest {
     static String filelistColumnName = "File name";
+    static boolean isTypeSensitive = true;
+    static boolean isGap = false;
     static boolean isDollar = true;
     static boolean inRowCompression = false;
 
@@ -25,9 +27,7 @@ public class SheetTest {
                     "2) SheetName \n" +
                     "3) Path of output result \n" +
                     "4) File directory \n" +
-                    "5) File name ('all' for all files in list) \n" +
-                    "6) TACO or NoComp or Antifreeze\n" +
-                    "7) IsGap True or False \n";
+                    "5) File name ('all' for all files in list) \n";
             System.out.println(warning);
             System.exit(-1);
         }
@@ -37,10 +37,6 @@ public class SheetTest {
         String outputPath = args[2];
         String fileDir = args[3];
         String targetFileName = args[4];
-
-        DepGraphType depGraphType = MainTestUtil.fromStringToDepGraphType(args[5]);
-        boolean isGap = args[6].equals("True");
-        boolean isTypeSensitive = true;
 
         List<String> fileNameList = parseInputFile(inputPath, sheetName, filelistColumnName);
 
@@ -61,12 +57,10 @@ public class SheetTest {
                     .append("numCompEdges").append(",")
                     .append("graphBuildTime").append(",");
             if (!inRowCompression) {
-                if (depGraphType == DepGraphType.TACO) {
-                    long numType = PatternType.values().length;
-                    for (int pIdx = 0; pIdx < numType; pIdx++) {
-                        stringBuilder.append(PatternType.values()[pIdx].label + "_Comp").append(",")
-                                .append(PatternType.values()[pIdx].label + "_NoComp").append(",");
-                    }
+                long numType = PatternType.values().length;
+                for (int pIdx = 0; pIdx < numType; pIdx++) {
+                    stringBuilder.append(PatternType.values()[pIdx].label + "_Comp").append(",")
+                            .append(PatternType.values()[pIdx].label + "_NoComp").append(",");
                 }
             }
             stringBuilder.deleteCharAt(stringBuilder.length() - 1).append("\n");
@@ -77,8 +71,8 @@ public class SheetTest {
                     System.out.println("[1/1]: processing " + targetFileName);
                     String filePath = fileDir + "/" + targetFileName;
                     try {
-                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression,
-                                depGraphType, isDollar, isGap, isTypeSensitive);
+                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar,
+                                isGap, isTypeSensitive);
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException e) {
                         System.out.println(e.getMessage());
@@ -93,8 +87,8 @@ public class SheetTest {
                     System.out.println("[" + counter + "/" + fileNameList.size() + "]: " + "processing " + fileName);
                     String filePath = fileDir + "/" + fileName;
                     try {
-                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression,
-                                depGraphType, isDollar, isGap, isTypeSensitive);
+                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar,
+                                isGap, isTypeSensitive);
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException e) {
                         System.out.println(e.getMessage());
@@ -159,7 +153,7 @@ public class SheetTest {
     }
 
     private static boolean checkArgs(String[] args) {
-        if (args.length != 7) {
+        if (args.length != 5) {
             System.out.println("Incorrect length!");
             return false;
         }
@@ -168,11 +162,6 @@ public class SheetTest {
         File fileDir = new File(args[3]);
         if (!inputFile.exists() || !fileDir.exists()) {
             System.out.println("Wrong file path!");
-            return false;
-        }
-
-        if (!(args[5].equals("TACO") || args[5].equals("NoComp"))) {
-            System.out.println("Wrong model type!");
             return false;
         }
 

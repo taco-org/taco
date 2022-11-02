@@ -2,7 +2,7 @@ package org.dataspread.sheetanalyzer.mainTest;
 
 import org.apache.poi.openxml4j.exceptions.OpenXML4JRuntimeException;
 import org.dataspread.sheetanalyzer.SheetAnalyzer;
-import org.dataspread.sheetanalyzer.dependency.util.DepGraphType;
+import org.dataspread.sheetanalyzer.analyzer.SheetAnalyzerImpl;
 import org.dataspread.sheetanalyzer.dependency.util.PatternType;
 import org.dataspread.sheetanalyzer.util.SheetNotSupportedException;
 
@@ -12,25 +12,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 public class TestSheetAnalyzer {
+    static boolean isTypeSensitive = true;
+    static boolean isGap = false;
+    static boolean isDollar = true;
+    static boolean inRowCompression = false;
 
     public static void main(String[] args) {
 
-        if (args.length != 5) {
+        if (args.length != 2) {
             System.out.println("Need four arguments: \n" +
                     "1) Path of input folder \n" +
-                    "2) Path of output result (csv) \n" +
-                    "3) TACO or NoComp \n" +
-                    "4) isDollar True or False \n" +
-                    "5) isGap True or False \n"
+                    "2) Path of output result (csv) \n"
             );
             System.exit(-1);
         }
-
-        boolean inRowCompression = false;
-        DepGraphType depGraphType = MainTestUtil.fromStringToDepGraphType(args[2]);
-        boolean isDollar = args[3].equals("True");
-        boolean isGap = args[4].equals("True");
-        boolean isTypeSensitive = false;
 
         String statPath = args[1];
         File inputFile = new File(args[0]);
@@ -54,7 +49,7 @@ public class TestSheetAnalyzer {
                         .append("numCompEdges").append(",")
                         .append("graphBuildTime").append(",");
 
-                if (!inRowCompression && depGraphType == DepGraphType.TACO) {
+                if (!inRowCompression) {
                     long numType = PatternType.values().length;
                     for (int pIdx = 0; pIdx < numType; pIdx++) {
                         stringBuilder.append(PatternType.values()[pIdx].label + "_Comp").append(",")
@@ -70,8 +65,8 @@ public class TestSheetAnalyzer {
                             fileArray.length + "]: "+ "processing " + file.getName());
                     String filePath = file.getAbsolutePath();
                     try {
-                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzer(filePath, inRowCompression,
-                                depGraphType, isDollar, isGap, isTypeSensitive);
+                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression,
+                                isDollar, isGap, isTypeSensitive);
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException | OpenXML4JRuntimeException e) {
                         System.out.println(e);

@@ -1,25 +1,24 @@
 package org.dataspread.sheetanalyzer.mainTest;
 
 import org.apache.poi.ss.usermodel.*;
-import org.dataspread.sheetanalyzer.dependency.util.DepGraphType;
 
 import java.io.*;
 import java.util.HashMap;
 
 public class GraphModifyTest {
     static String filelistColumnName = "File name";
+    static boolean isTypeSensitive = true;
+    static boolean isGap = false;
     static boolean isDollar = true;
 
     public static void main(String[] args) throws IOException {
         if(!checkArgs(args)) {
-            String warnings = "To run GraphModifyTest, we need 7 arguments: \n" +
+            String warnings = "To run GraphModifyTest, we need 5 arguments: \n" +
                     "1) Path of a xls(x) file containing 'File name' and 'Def Ref' \n" +
                     "2) SheetName \n" +
                     "3) Path of output result \n" +
                     "4) File directory \n" +
-                    "5) File name ('all' for all files in dir) \n" +
-                    "6) TACO or NoComp or Antifreeze \n" +
-                    "7) IsGap True or False \n";
+                    "5) File name ('all' for all files in dir) \n";
             System.out.println(warnings);
             System.exit(-1);
         }
@@ -29,8 +28,6 @@ public class GraphModifyTest {
         String outputPath = args[2];
         String fileDir = args[3];
         String targetFileName = args[4];
-        DepGraphType depGraphType = MainTestUtil.fromStringToDepGraphType(args[5]);
-        boolean isGap = args[6].compareToIgnoreCase("True") == 0;
         String targetColumn = "Max Dep Ref";
 
         HashMap<String, String> fileNameDepRefMap
@@ -53,7 +50,7 @@ public class GraphModifyTest {
                 if (fileNameDepRefMap.containsKey(targetFileName)) {
                     String depLoc = fileNameDepRefMap.get(targetFileName);
                     System.out.println("[1/1]: processing " + targetFileName);
-                    MainTestUtil.TestGraphModify(statPW, fileDir, targetFileName, depLoc, depGraphType, isDollar, isGap);
+                    MainTestUtil.TestGraphModify(statPW, fileDir, targetFileName, depLoc, isDollar, isGap, isTypeSensitive);
                 } else {
                     System.out.println("Cannot find target filename in DepRefMap");
                     System.exit(-1);
@@ -63,7 +60,7 @@ public class GraphModifyTest {
                     String depLoc = fileNameDepRefMap.get(fileName);
                     counter += 1;
                     System.out.println("[" + counter + "/" + fileNameDepRefMap.size() + "]: " + "processing " + fileName);
-                    MainTestUtil.TestGraphModify(statPW, fileDir, fileName, depLoc, depGraphType, isDollar, isGap);
+                    MainTestUtil.TestGraphModify(statPW, fileDir, fileName, depLoc, isDollar, isGap, isTypeSensitive);
                 }
             }
         } catch (IOException e) {
@@ -121,6 +118,7 @@ public class GraphModifyTest {
                 if (fileNameCell.getCellType() == CellType.STRING) {
                     fileName = fileNameCell.getStringCellValue();
                 }
+                assert depCell != null;
                 if (depCell.getCellType() == CellType.STRING) {
                     depLoc = depCell.getStringCellValue();
                 }
@@ -135,7 +133,7 @@ public class GraphModifyTest {
 
 
     private static boolean checkArgs(String[] args) {
-        if (args.length != 7) {
+        if (args.length != 5) {
             System.out.println("Incorrect length!");
             return false;
         }
@@ -144,11 +142,6 @@ public class GraphModifyTest {
         File fileDir = new File(args[3]);
         if (!fileDir.exists() || !inputFile.exists()) {
             System.out.println("Wrong file path!");
-            return false;
-        }
-
-        if (!(args[5].equals("TACO") || args[5].equals("NoComp"))) {
-            System.out.println("Wrong model type!");
             return false;
         }
 
