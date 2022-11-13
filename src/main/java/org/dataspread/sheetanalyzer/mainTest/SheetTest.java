@@ -4,6 +4,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.dataspread.sheetanalyzer.SheetAnalyzer;
 import org.dataspread.sheetanalyzer.analyzer.SheetAnalyzerImpl;
 import org.dataspread.sheetanalyzer.dependency.util.PatternType;
+import org.dataspread.sheetanalyzer.dependency.util.RefWithMeta;
+import org.dataspread.sheetanalyzer.util.Ref;
 import org.dataspread.sheetanalyzer.util.SheetNotSupportedException;
 
 import java.io.File;
@@ -12,6 +14,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SheetTest {
     static String filelistColumnName = "File name";
@@ -46,7 +49,10 @@ public class SheetTest {
         }
 
         int counter = 0;
-        try (PrintWriter statPW = new PrintWriter(new FileWriter(outputPath, true))) {
+        try (
+                PrintWriter statPW = new PrintWriter(new FileWriter(outputPath, true));
+                PrintWriter edgePW = new PrintWriter(new FileWriter("./github_max2_edge.txt", true));
+        ) {
             // Write headers in stat
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("fileName").append(",")
@@ -73,6 +79,16 @@ public class SheetTest {
                     try {
                         SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar,
                                 isGap, isTypeSensitive);
+                        Map<String, Map<Ref, List<RefWithMeta>>> graph = sheetAnalyzer.getTACODepGraphs();
+                        for (String sheetname: graph.keySet()) {
+                            Map<Ref, List<RefWithMeta>> sheetGraph = graph.get(sheetname);
+                            for (Ref prec: sheetGraph.keySet()) {
+                                for (RefWithMeta dep: sheetGraph.get(prec)) {
+                                    edgePW.write(prec + " - " + dep.getRef() + "\n");
+                                }
+                            }
+                            edgePW.write("\n");
+                        }
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException e) {
                         System.out.println(e.getMessage());

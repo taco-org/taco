@@ -1,5 +1,7 @@
 package org.dataspread.sheetanalyzer.analyzer;
 
+import com.github.davidmoten.rtree.RTree;
+import com.github.davidmoten.rtree.geometry.Rectangle;
 import org.dataspread.sheetanalyzer.SheetAnalyzer;
 import org.dataspread.sheetanalyzer.dependency.DependencyGraph;
 import org.dataspread.sheetanalyzer.dependency.DependencyGraphTACO;
@@ -15,6 +17,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.dataspread.sheetanalyzer.dependency.util.PatternTools.getRectangleFromRef;
 
 public class SheetAnalyzerImpl extends SheetAnalyzer {
 
@@ -122,12 +126,40 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
     }
 
     @Override
-    public Map<Ref, List<RefWithMeta>> getDependents(String sheetName, Ref ref) {
+    public Set<Ref> getDependents(String sheetName, Ref ref) {
+        Map<Ref, List<RefWithMeta>> dependentsSubGraph = getDependentsSubGraph(sheetName, ref);
+        Set<Ref> resultSet = new HashSet<>();
+        for (Ref key: dependentsSubGraph.keySet()) {
+            List<RefWithMeta> dependentsList = dependentsSubGraph.get(key);
+            for (RefWithMeta refWithMeta: dependentsList) {
+                Ref depRef = refWithMeta.getRef();
+                resultSet.add(depRef);
+            }
+        }
+        return resultSet;
+    }
+
+    @Override
+    public Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref) {
         return ((DependencyGraphTACO)(depGraphMap.get(sheetName))).getDependents(ref, false);
     }
 
     @Override
-    public Map<Ref, List<RefWithMeta>> getPrecedents(String sheetName, Ref ref) {
+    public Set<Ref> getPrecedents(String sheetName, Ref ref) {
+        Map<Ref, List<RefWithMeta>> precedentsSubGraph = getPrecedentsSubGraph(sheetName, ref);
+        Set<Ref> resultSet = new HashSet<>();
+        for (Ref key: precedentsSubGraph.keySet()) {
+            List<RefWithMeta> precedentsList = precedentsSubGraph.get(key);
+            for (RefWithMeta refWithMeta: precedentsList) {
+                Ref depRef = refWithMeta.getRef();
+                resultSet.add(depRef);
+            }
+        }
+        return resultSet;
+    }
+
+    @Override
+    public Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref) {
         return ((DependencyGraphTACO)(depGraphMap.get(sheetName))).getPrecedents(ref, false);
     }
 

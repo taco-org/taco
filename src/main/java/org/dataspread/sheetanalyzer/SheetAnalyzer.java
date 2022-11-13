@@ -44,23 +44,42 @@ public abstract class SheetAnalyzer {
      */
     public abstract Map<String, DependencyGraph> getDependencyGraphs();
 
-    /**
-     * Get the dependents of a reference {@link Ref}
-     *
-     * @param sheetName
-     * @param ref
-     * @return
-     */
-    public abstract Map<Ref, List<RefWithMeta>> getDependents(String sheetName, Ref ref);
 
     /**
-     * Get the precedents of a reference {@link Ref}
+     * Get the set of dependents of a reference {@link Ref}
      *
      * @param sheetName
      * @param ref
      * @return
      */
-    public abstract Map<Ref, List<RefWithMeta>> getPrecedents(String sheetName, Ref ref);
+    public abstract Set<Ref> getDependents(String sheetName, Ref ref);
+
+    /**
+     * Get the subgraph of dependents of a reference {@link Ref}
+     *
+     * @param sheetName
+     * @param ref
+     * @return
+     */
+    public abstract Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref);
+
+    /**
+     * Get the set of precedents of a reference {@link Ref}
+     *
+     * @param sheetName
+     * @param ref
+     * @return
+     */
+    public abstract Set<Ref> getPrecedents(String sheetName, Ref ref);
+
+    /**
+     * Get the subgraph of precedents of a reference {@link Ref}
+     *
+     * @param sheetName
+     * @param ref
+     * @return
+     */
+    public abstract Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref);
 
     /**
      * Get the full information of a TACO graph

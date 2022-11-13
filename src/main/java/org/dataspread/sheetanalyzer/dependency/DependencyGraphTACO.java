@@ -13,6 +13,7 @@ import org.dataspread.sheetanalyzer.util.Ref;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.dataspread.sheetanalyzer.dependency.util.PatternTools.*;
 
@@ -48,6 +49,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
 
     private HashMap<Ref, List<RefWithMeta>> getDependentsInternal(Ref precedent, boolean isDirectDep) {
         HashMap<Ref, Set<RefWithMeta>> results = new HashMap<>();
+        AtomicReference<RTree<Ref, Rectangle>> resultSet = new AtomicReference<>(RTree.create());
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(precedent);
         while (!updateQueue.isEmpty()) {
@@ -66,7 +68,12 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                         for (RefWithMeta depRef : depUpdateRefSet) {
                             tempResults.add(depRef);
                             if (!isDirectDep) {
-                                updateQueue.add(depRef.getRef());
+                                LinkedList<Ref> nonOverlapDepRef = getNonOverlapRef(resultSet.get(), depRef.getRef());
+                                Set<Ref> depRefSet = new HashSet<>(nonOverlapDepRef);
+                                for (Ref nolref: depRefSet) {
+                                    resultSet.set(resultSet.get().add(nolref, RefUtils.refToRect(nolref)));
+                                    updateQueue.add(nolref);
+                                }
                             }
                         }
                         if (!tempResults.isEmpty()) {
@@ -96,6 +103,7 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
 
     private HashMap<Ref, List<RefWithMeta>> getPrecedentsInternal(Ref dependent, boolean isDirectPrec) {
         HashMap<Ref, Set<RefWithMeta>> results = new HashMap<>();
+        AtomicReference<RTree<Ref, Rectangle>> resultSet = new AtomicReference<>(RTree.create());
         Queue<Ref> updateQueue = new LinkedList<>();
         updateQueue.add(dependent);
         while (!updateQueue.isEmpty()) {
@@ -111,7 +119,12 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                         RefWithMeta precUpdateRef = findUpdatePrecRefWithMeta(overlappingDepRef, precRefWithMeta,
                                 realUpdateRef, isDirectPrec);
                         if (!isDirectPrec) {
-                            updateQueue.add(precUpdateRef.getRef());
+                            LinkedList<Ref> nonOverlapPrecRef = getNonOverlapRef(resultSet.get(), precUpdateRef.getRef());
+                            Set<Ref> precRefSet = new HashSet<>(nonOverlapPrecRef);
+                            for (Ref nolref: precRefSet) {
+                                resultSet.set(resultSet.get().add(nolref, RefUtils.refToRect(nolref)));
+                                updateQueue.add(nolref);
+                            }
                         }
                         Set<RefWithMeta> oldResults = results.getOrDefault(updateRef, new HashSet<>());
                         oldResults.add(precUpdateRef);
