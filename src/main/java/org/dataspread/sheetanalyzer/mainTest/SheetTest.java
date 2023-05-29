@@ -22,6 +22,7 @@ public class SheetTest {
     static boolean isGap = false;
     static boolean isDollar = true;
     static boolean inRowCompression = false;
+    static boolean isCompression = true;
 
     public static void main(String[] args) throws IOException {
         if (!checkArgs(args)) {
@@ -77,7 +78,7 @@ public class SheetTest {
                     System.out.println("[1/1]: processing " + targetFileName);
                     String filePath = fileDir + "/" + targetFileName;
                     try {
-                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar,
+                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression, isDollar,
                                 isGap, isTypeSensitive);
                         Map<String, Map<Ref, List<RefWithMeta>>> graph = sheetAnalyzer.getTACODepGraphs();
                         for (String sheetname: graph.keySet()) {

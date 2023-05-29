@@ -16,6 +16,7 @@ public class TestSheetAnalyzer {
     static boolean isGap = false;
     static boolean isDollar = true;
     static boolean inRowCompression = false;
+    static boolean isCompression = false;
 
     public static void main(String[] args) {
 
@@ -65,7 +66,7 @@ public class TestSheetAnalyzer {
                             fileArray.length + "]: "+ "processing " + file.getName());
                     String filePath = file.getAbsolutePath();
                     try {
-                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression,
+                        SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression,
                                 isDollar, isGap, isTypeSensitive);
                         MainTestUtil.writePerSheetStat(sheetAnalyzer, statPW, inRowCompression);
                     } catch (SheetNotSupportedException | OutOfMemoryError | NullPointerException | OpenXML4JRuntimeException e) {

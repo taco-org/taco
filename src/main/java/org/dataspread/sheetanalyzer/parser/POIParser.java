@@ -52,6 +52,47 @@ public class POIParser implements SpreadsheetParser {
         }
     }
 
+    public POIParser(Map<String, String[][]> sheetContent) throws SheetNotSupportedException {
+        try {
+            fileName = "TempWorkbook";
+            sheetDataMap = new HashMap<>();
+            workbook = new XSSFWorkbook();
+            evalbook = XSSFEvaluationWorkbook.create((XSSFWorkbook) workbook);
+            parseSheetContentToWorkbook(sheetContent);
+            parseSpreadsheet();
+        } catch (Exception e) {
+            throw new SheetNotSupportedException("Parsing formulae failed");
+        }
+    }
+
+    private void parseSheetContentToWorkbook(Map<String, String[][]> sheetContent) {
+        for (Map.Entry<String, String[][]> sheet : sheetContent.entrySet()) {
+            String sheetName = sheet.getKey();
+            String[][] sheetCells = sheet.getValue();
+            parseCellsToWorkbook(sheetName, sheetCells);
+        }
+    }
+
+    private void parseCellsToWorkbook(String sheetName, String[][] cells) {
+        Sheet sheet = workbook.createSheet(sheetName);
+        for (int i = 0; i < cells.length; i++) {
+            Row row = sheet.createRow(i);
+            for (int j = 0; j < cells[0].length; j++) {
+                String cellString = cells[i][j];
+                boolean isFormula = cellString.startsWith("=");
+                CellType cellType = isFormula ? CellType.FORMULA : CellType.STRING;
+                Cell cell = row.createCell(j, cellType);
+                if (isFormula) {
+                    cell.setCellFormula(cellString.substring(1));
+                } else if (cellString.length() < 1) {
+                    cell.setBlank();
+                } else {
+                    cell.setCellValue(cellString);
+                }
+            }
+        }
+    }
+
     public String getFileName() {
         return fileName;
     }

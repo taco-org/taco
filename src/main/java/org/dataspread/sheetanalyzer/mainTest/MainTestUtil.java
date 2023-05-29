@@ -71,11 +71,12 @@ public class MainTestUtil {
     public static void TestGraphModify(PrintWriter statPW, String fileDir, String fileName,
                                        String refLoc, boolean isDollar, boolean isGap, boolean isTypeSensitive) {
         boolean inRowCompression = false;
+        boolean isCompression = true;
         String filePath = fileDir + "/" + fileName;
         int modifySize = 1000;
 
         try {
-            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar, isGap, isTypeSensitive);
+            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression, isDollar, isGap, isTypeSensitive);
             String sheetName = refLoc.split(":")[0];
             Ref targetRef = RefUtils.fromStringToCell(refLoc);
             int origRow = targetRef.getRow();
@@ -111,10 +112,11 @@ public class MainTestUtil {
     public static void TestRefDependent(PrintWriter statPW, String fileDir, String fileName,
                                         String refLoc, boolean isDollar, boolean isGap, boolean isTypeSensitive) {
         boolean inRowCompression = false;
+        boolean isCompression = false;
         String filePath = fileDir + "/" + fileName;
 
         try {
-            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, inRowCompression, isDollar, isGap, true);
+            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression, isDollar, isGap, true);
             long graphBuildTime = sheetAnalyzer.getGraphBuildTimeCost();
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append(fileName).append(",")
@@ -125,12 +127,12 @@ public class MainTestUtil {
             String sheetName = refLoc.split(":")[0];
             Ref targetRef = RefUtils.fromStringToCell(refLoc);
 
-            HashMap<Ref, List<RefWithMeta>> result;
+            Map<Ref, List<RefWithMeta>> result;
             long lookupSize, lookupTime;
             DependencyGraph depGraph = sheetAnalyzer.getDependencyGraphs().get(sheetName);
 
             long start = System.currentTimeMillis();
-            result = ((DependencyGraphTACO)depGraph).getDependents(targetRef, false);
+            result = depGraph.getDependents(targetRef, false);
             lookupSize = result.size();
             lookupTime = System.currentTimeMillis() - start;
 

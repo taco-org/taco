@@ -1,10 +1,9 @@
 package org.dataspread.sheetanalyzer.analyzer;
 
-import com.github.davidmoten.rtree.RTree;
-import com.github.davidmoten.rtree.geometry.Rectangle;
 import org.dataspread.sheetanalyzer.SheetAnalyzer;
 import org.dataspread.sheetanalyzer.dependency.DependencyGraph;
 import org.dataspread.sheetanalyzer.dependency.DependencyGraphTACO;
+import org.dataspread.sheetanalyzer.dependency.DependencyGraphNoComp;
 import org.dataspread.sheetanalyzer.dependency.util.RefWithMeta;
 import org.dataspread.sheetanalyzer.parser.POIParser;
 import org.dataspread.sheetanalyzer.parser.SpreadsheetParser;
@@ -18,43 +17,73 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.dataspread.sheetanalyzer.dependency.util.PatternTools.getRectangleFromRef;
-
 public class SheetAnalyzerImpl extends SheetAnalyzer {
 
     private final SpreadsheetParser parser;
     private final String fileName;
     private HashMap<String, SheetData> sheetDataMap;
     private HashMap<String, DependencyGraph> depGraphMap;
+    private boolean isCompression;
     private boolean inRowCompression;
 
     private long numEdges = 0;
     private long numVertices = 0;
-    private final long maxNumQueries = 100000;
-    private final long maxUnChangeNumQueries = 10000;
     private long graphBuildTimeCost = 0;
 
     public SheetAnalyzerImpl(String filePath) throws SheetNotSupportedException {
-        this(filePath, false);
+        this(filePath, true);
     }
 
-    public SheetAnalyzerImpl(String filePath, boolean inRowCompression) throws SheetNotSupportedException {
-        this(filePath, inRowCompression, true);
+    public SheetAnalyzerImpl(String filePath, boolean isCompression) throws SheetNotSupportedException {
+        this(filePath, isCompression, true);
     }
 
     public SheetAnalyzerImpl(String filePath,
-                         boolean inRowCompression,
+                         boolean isCompression,
                          boolean isDollar) throws SheetNotSupportedException {
-        this(filePath, inRowCompression, isDollar, false);
+        this(filePath, isCompression, false, isDollar, false);
     }
 
     public SheetAnalyzerImpl(String filePath,
+                         boolean isCompression,
                          boolean inRowCompression,
                          boolean isDollar, boolean isGap) throws SheetNotSupportedException {
-        this(filePath, inRowCompression, isDollar, isGap, false);
+        this(filePath, isCompression, inRowCompression, isDollar, isGap, false);
+    }
+
+    public SheetAnalyzerImpl(Map<String, String[][]> sheetContent) throws SheetNotSupportedException {
+        this(sheetContent, true, false, true, false, true);
+    }
+
+    public SheetAnalyzerImpl(Map<String, String[][]> sheetContent, boolean isCompression)
+            throws SheetNotSupportedException {
+        this(sheetContent, isCompression, false, true, false, true);
+    }
+
+    public SheetAnalyzerImpl(Map<String, String[][]> sheetContent,
+                             boolean isCompression,
+                             boolean inRowCompression,
+                             boolean isDollar, boolean isGap, boolean isTypeSensitive) throws SheetNotSupportedException {
+        parser = new POIParser(sheetContent);
+        fileName = parser.getFileName();
+        // All sheet data stored <string, sheetdata>
+        sheetDataMap = parser.getSheetData();
+        this.isCompression = isCompression;
+        this.inRowCompression = inRowCompression;
+
+        depGraphMap = new HashMap<>();
+        long start = System.currentTimeMillis();
+        if (this.isCompression) {
+            genDepGraphFromSheetData(depGraphMap, isDollar, isGap, isTypeSensitive);
+        } else {
+            genNoCompDepGraphFromSheetData(depGraphMap);
+        }
+        long end = System.currentTimeMillis();
+        graphBuildTimeCost = end - start;
     }
 
     public SheetAnalyzerImpl(String filePath,
+                         boolean isCompression,
                          boolean inRowCompression,
                          boolean isDollar, boolean isGap, boolean isTypeSensitive) throws SheetNotSupportedException {
         parser = new POIParser(filePath);
@@ -62,10 +91,15 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
         // All sheet data stored <string, sheetdata>
         sheetDataMap = parser.getSheetData();
         this.inRowCompression = inRowCompression;
+        this.isCompression = isCompression;
 
         depGraphMap = new HashMap<>();
         long start = System.currentTimeMillis();
-        genDepGraphFromSheetData(depGraphMap, isDollar, isGap, isTypeSensitive);
+        if (this.isCompression) {
+            genDepGraphFromSheetData(depGraphMap, isDollar, isGap, isTypeSensitive);
+        } else {
+            genNoCompDepGraphFromSheetData(depGraphMap);
+        }
         long end = System.currentTimeMillis();
         graphBuildTimeCost = end - start;
     }
@@ -101,11 +135,34 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
                 refSet.add(dep);
                 refSet.addAll(precList);
             });
-
             inputDepGraphMap.put(sheetName, tacoGraph);
             numVertices += refSet.size();
         });
     }
+
+    private void genNoCompDepGraphFromSheetData(HashMap<String, DependencyGraph> inputDepGraphMap) {
+        sheetDataMap.forEach((sheetName, sheetData) -> {
+            DependencyGraphNoComp depGraph = new DependencyGraphNoComp();
+            HashSet<Ref> refSet = new HashSet<>();
+            sheetData.getDepPairs().forEach(depPair -> {
+                Ref dep = depPair.first;
+                List<Ref> precList = depPair.second;
+                Set<Ref> visited = new HashSet<>();
+                precList.forEach(prec -> {
+                    if (!visited.contains(prec)) {
+                        depGraph.add(prec, dep);
+                        numEdges += 1;
+                        visited.add(prec);
+                    }
+                });
+                refSet.add(dep);
+                refSet.addAll(precList);
+            });
+            inputDepGraphMap.put(sheetName, depGraph);
+            numVertices += refSet.size();
+        });
+    }
+
 
     @Override
     public String getFileName() { return fileName; }
@@ -141,7 +198,7 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
 
     @Override
     public Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref) {
-        return ((DependencyGraphTACO)(depGraphMap.get(sheetName))).getDependents(ref, false);
+        return depGraphMap.get(sheetName).getDependents(ref, false);
     }
 
     @Override
@@ -160,15 +217,17 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
 
     @Override
     public Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref) {
-        return ((DependencyGraphTACO)(depGraphMap.get(sheetName))).getPrecedents(ref, false);
+        return depGraphMap.get(sheetName).getPrecedents(ref, false);
     }
 
     @Override
     public Map<String, Map<Ref, List<RefWithMeta>>> getTACODepGraphs() {
         Map<String, Map<Ref, List<RefWithMeta>>> tacoDepGraphs = new HashMap<>();
-        depGraphMap.forEach((sheetName, depGraph) -> {
-            tacoDepGraphs.put(sheetName, ((DependencyGraphTACO)depGraph).getCompressedGraph());
-        });
+        if (this.isCompression) {
+            depGraphMap.forEach((sheetName, depGraph) -> {
+                tacoDepGraphs.put(sheetName, ((DependencyGraphTACO)depGraph).getCompressedGraph());
+            });
+        }
         return tacoDepGraphs;
     }
 

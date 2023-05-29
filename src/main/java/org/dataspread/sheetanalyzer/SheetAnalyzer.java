@@ -3,6 +3,7 @@ package org.dataspread.sheetanalyzer;
 import org.dataspread.sheetanalyzer.analyzer.SheetAnalyzerImpl;
 import org.dataspread.sheetanalyzer.dependency.DependencyGraph;
 import org.dataspread.sheetanalyzer.dependency.util.RefWithMeta;
+import org.dataspread.sheetanalyzer.util.CellContent;
 import org.dataspread.sheetanalyzer.util.Pair;
 import org.dataspread.sheetanalyzer.util.Ref;
 import org.dataspread.sheetanalyzer.util.SheetNotSupportedException;
@@ -21,6 +22,35 @@ public abstract class SheetAnalyzer {
     public static SheetAnalyzer createSheetAnalyzer(String filePath) throws SheetNotSupportedException {
         return new SheetAnalyzerImpl(filePath);
     }
+
+    /**
+     * Creating a SheetAnalyzer from a map between sheetName and associated
+     * cells (String[][]). Used to handle output from Excel's JavaScript API.
+     * {@link CellContent}
+     *
+     * @param spreadsheetContent
+     * @return
+     * @throws SheetNotSupportedException
+     */
+    public static SheetAnalyzer createSheetAnalyzer(Map<String, String[][]> spreadsheetContent)
+            throws SheetNotSupportedException {
+        return new SheetAnalyzerImpl(spreadsheetContent);
+    }
+
+    /**
+     * Creating a SheetAnalyzer with NoComp Dependency Graph from a map between sheetName and associated
+     * cells (String[][]). Used to handle output from Excel's JavaScript API.
+     * {@link CellContent}
+     *
+     * @param spreadsheetContent
+     * @return
+     * @throws SheetNotSupportedException
+     */
+    public static SheetAnalyzer createNoCompSheetAnalyzer(Map<String, String[][]> spreadsheetContent)
+            throws SheetNotSupportedException {
+        return new SheetAnalyzerImpl(spreadsheetContent, false);
+    }
+
 
     /**
      * @return fileName
