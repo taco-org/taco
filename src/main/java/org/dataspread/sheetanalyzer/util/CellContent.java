@@ -3,11 +3,13 @@ package org.dataspread.sheetanalyzer.util;
 public class CellContent {
     final String value;
     final String formula;
+    final FormulaToken[] formulaTokens;
     final boolean isFormula;
 
-    public CellContent (String value, String formula, boolean isFormula) {
+    public CellContent (String value, String formula, FormulaToken[] formulaTokens, boolean isFormula) {
         this.value = value;
         this.formula = formula;
+        this.formulaTokens = formulaTokens;
         this.isFormula = isFormula;
     }
 
@@ -19,11 +21,15 @@ public class CellContent {
         return formula;
     }
 
+    public FormulaToken[] getFormulaTokens() {
+        return formulaTokens;
+    }
+
     public boolean isFormula() {
         return isFormula;
     }
 
     public static CellContent getNullCellContent() {
-        return new CellContent("", "", false);
+        return new CellContent("", "", null, false);
     }
 }

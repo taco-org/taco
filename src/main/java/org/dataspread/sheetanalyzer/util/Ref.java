@@ -34,6 +34,12 @@ public interface Ref {
 	void setEdgeType(EdgeType type);
 	EdgeType getEdgeType();
 
+	void setIntermediate(boolean isIntermediate);
+	boolean isIntermediate();
+
+	void setConstant(boolean isConstant);
+	boolean isConstant();
+
 	// ADD: interface for dollar setting and checking
 	void setLeftUpColumnDollar();
 	void setLeftUpRowDollar();

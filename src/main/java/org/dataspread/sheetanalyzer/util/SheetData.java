@@ -230,4 +230,26 @@ public class SheetData {
     public String getSheetName() {
         return sheetName;
     }
+
+    public List<Map.Entry<Ref, CellContent>> getSortedCellContent() {
+        return sortCellContents(sheetContent);
+    }
+
+    public List<Map.Entry<Ref, CellContent>> sortCellContents(HashMap<Ref, CellContent> cellContentHashMap) {
+        List<Map.Entry<Ref, CellContent>> list = new ArrayList<>(cellContentHashMap.entrySet());
+
+        // Sort the list using a custom comparator based on the keys
+        list.sort((entry1, entry2) -> {
+            Ref ref1 = entry1.getKey();
+            Ref ref2 = entry2.getKey();
+            if (ref1.getColumn() < ref2.getColumn()) return -1;
+            else if (ref1.getColumn() > ref2.getColumn()) return 1;
+            if (ref1.getRow() < ref2.getRow()) return -1;
+            else if (ref1.getRow() > ref2.getRow()) return 1;
+            return 0;
+        });
+
+        return list;
+    }
+
 }

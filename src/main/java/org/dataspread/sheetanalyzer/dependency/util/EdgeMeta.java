@@ -7,6 +7,7 @@ public class EdgeMeta {
     public final PatternType patternType;
     public final Offset startOffset;
     public final Offset endOffset;
+    public boolean isConstant = false;
 
     public EdgeMeta(PatternType patternType,
                     Offset startOffset, Offset endOffset) {

@@ -754,32 +754,6 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
         }
     }
 
-    private class CompressInfo {
-        Boolean isDuplicate;
-        Direction direction;
-        PatternType compType;
-        Ref prec;
-        Ref dep;
-        Ref candPrec;
-        Ref candDep;
-        EdgeMeta edgeMeta;
-
-        CompressInfo(Boolean isDuplicate,
-                     Direction direction,
-                     PatternType compType,
-                     Ref prec, Ref dep,
-                     Ref candPrec, Ref candDep, EdgeMeta edgeMeta) {
-            this.isDuplicate = isDuplicate;
-            this.direction = direction;
-            this.compType = compType;
-            this.prec = prec;
-            this.dep = dep;
-            this.candPrec = candPrec;
-            this.candDep = candDep;
-            this.edgeMeta = edgeMeta;
-        }
-    }
-
     private class EdgeUpdate {
         Ref oldPrec;
         Ref oldDep;

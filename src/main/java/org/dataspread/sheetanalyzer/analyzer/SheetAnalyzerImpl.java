@@ -52,12 +52,12 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent) throws SheetNotSupportedException {
-        this(sheetContent, true, false, true, false, true);
+        this(sheetContent, true, false, true, false, false);
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent, boolean isCompression)
             throws SheetNotSupportedException {
-        this(sheetContent, isCompression, false, true, false, true);
+        this(sheetContent, isCompression, false, true, false, false);
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent,

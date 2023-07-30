@@ -35,6 +35,9 @@ public class RefImpl implements Ref, Serializable {
 	// ADD: Edgetype
 	private EdgeType edgeType = EdgeType.OTHER;
 
+	private boolean isIntermediate = false;
+	private boolean isConstant = false;
+
 	@SuppressWarnings("unused")
 	public RefImpl() {
 		// Required for serialization.
@@ -173,6 +176,26 @@ public class RefImpl implements Ref, Serializable {
 	@Override
 	public EdgeType getEdgeType() {
 		return edgeType;
+	}
+
+	@Override
+	public void setIntermediate(boolean isIntermediate) {
+		this.isIntermediate = isIntermediate;
+	}
+
+	@Override
+	public boolean isIntermediate() {
+		return isIntermediate;
+	}
+
+	@Override
+	public void setConstant(boolean isConstant) {
+		this.isConstant = isConstant;
+	}
+
+	@Override
+	public boolean isConstant() {
+		return this.isConstant;
 	}
 
 	@Override

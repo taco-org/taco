@@ -15,6 +15,7 @@ import org.dataspread.sheetanalyzer.dependency.util.EdgeType;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class POIParser implements SpreadsheetParser {
@@ -40,6 +41,7 @@ public class POIParser implements SpreadsheetParser {
             }
             parseSpreadsheet();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new SheetNotSupportedException("Parsing " + filePath + " failed");
         } finally {
             if (workbook != null) {
@@ -47,6 +49,8 @@ public class POIParser implements SpreadsheetParser {
                     workbook.close();
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (RuntimeException ignored) {
+
                 }
             }
         }
@@ -122,29 +126,34 @@ public class POIParser implements SpreadsheetParser {
         int maxRows = 0;
         int maxCols = 0;
         for (Row row : sheet) {
-            for (Cell cell : row)
+            for (Cell cell : row) {
                 if (cell.getColumnIndex() > maxCols) maxCols = cell.getColumnIndex();
+                if (cell.getCellType() == CellType.FORMULA) {
+                    parseOneFormulaCell(sheetData, cell);
+                }
+            }
             if (row.getRowNum() > maxRows) maxRows = row.getRowNum();
         }
 
-        for (int i = 0; i <= maxCols; i++) {
-            for (int j = 0; j <= maxRows; j++) {
-                Row row = sheet.getRow(j);
-                if (row != null) {
-                    Cell cell = row.getCell(i);
-                    if (cell != null) {
-                        if (cell.getCellType() == CellType.FORMULA) {
-                            parseOneFormulaCell(sheetData, cell);
-                        } else {
-                            Ref dep = new RefImpl(cell.getRowIndex(), cell.getColumnIndex());
-                            CellContent cellContent = new CellContent(getCellContentString(cell),
-                                    "", false);
-                            sheetData.addContent(dep, cellContent);
-                        }
-                    }
-                }
-            }
-        }
+        // for (int i = 0; i <= maxCols; i++) {
+        //     for (int j = 0; j <= maxRows; j++) {
+        //         Row row = sheet.getRow(j);
+        //         if (row != null) {
+        //             Cell cell = row.getCell(i);
+        //             if (cell != null) {
+        //                 if (cell.getCellType() == CellType.FORMULA) {
+        //                     parseOneFormulaCell(sheetData, cell);
+        //                 }
+        //                 // else {
+        //                 //     Ref dep = new RefImpl(cell.getRowIndex(), cell.getColumnIndex());
+        //                 //     CellContent cellContent = new CellContent(getCellContentString(cell),
+        //                 //             "", null, false);
+        //                 //     sheetData.addContent(dep, cellContent);
+        //                 // }
+        //             }
+        //         }
+        //     }
+        // }
 
         sheetData.setMaxRowsCols(maxRows, maxCols);
 
@@ -172,82 +181,49 @@ public class POIParser implements SpreadsheetParser {
 
         try {
             Ptg[] tokens = this.getTokens(cell);
-            assert tokens != null;
-            EdgeType edgeType = null;
-            int numberOfOperands = -1;
+            if (tokens == null) return;
             List<Ref> precList = new LinkedList<>();
-            Deque<Ref> precDeque = new ArrayDeque<>();
             int numRefs = 0;
+            ArrayList<FormulaToken> formulaTokens = new ArrayList<>();
 
             for (Ptg ptg: tokens) {
                 if (ptg instanceof OperandPtg) {
                     Ref prec = parseOneToken(cell, (OperandPtg) ptg, sheetData);
-                    if (prec != null) {
-                        numRefs += 1;
-                        precDeque.push(prec);
-                    }
+                    prec.setConstant(false);
+                    precList.add(prec);
+                    numRefs += 1;
+
+                    formulaTokens.add(new FormulaToken(prec, "", 0));
+                } else if (ptg instanceof OperationPtg) {
+                    OperationPtg operationPtg = (OperationPtg) ptg;
+                    int numOperands = operationPtg.getNumberOfOperands();
+                    String[] operands = new String[numOperands];
+                    Arrays.fill(operands, "");
+
+                    String funcStr = operationPtg.toFormulaString(operands).replaceAll("[,()]+$", "");
+                    if (funcStr.compareToIgnoreCase("#REF!") == 0 ||
+                            funcStr.compareToIgnoreCase("#Value!") == 0)
+                        return;
+                    formulaTokens.add(new FormulaToken(null, funcStr, numOperands));
+                } else if (ptg instanceof ScalarConstantPtg) {
+                    Ref prec = new RefImpl(0, 0);
+                    prec.setConstant(true);
+                    formulaTokens.add(new FormulaToken(prec, "", 0));
+                } else {
+                   return;
                 }
-                if (ptg instanceof OperationPtg || ptg instanceof AttrPtg) {
-                    if (ptg instanceof AttrPtg) {
-                        numberOfOperands = ((AttrPtg) ptg).getNumberOfOperands();
-                    } else {
-                        numberOfOperands = ((OperationPtg) ptg).getNumberOfOperands();
-                    }
-
-                    if (ptg instanceof AddPtg) {
-                        edgeType = EdgeType.ADD;
-                    } else if (ptg instanceof SubtractPtg) {
-                        edgeType = EdgeType.SUBTRACT;
-                    } else if (ptg instanceof MultiplyPtg) {
-                        edgeType = EdgeType.MULTIPLY;
-                    } else if (ptg instanceof DividePtg) {
-                        edgeType = EdgeType.DIVIDE;
-                    } else if (ptg instanceof PowerPtg) {
-                        edgeType = EdgeType.POWER;
-                    } else if (ptg instanceof GreaterEqualPtg ||
-                            ptg instanceof GreaterThanPtg ||
-                            ptg instanceof LessThanPtg ||
-                            ptg instanceof LessEqualPtg ||
-                            ptg instanceof NotEqualPtg ||
-                            ptg instanceof EqualPtg) {
-                        edgeType = EdgeType.COMPARE;
-                    } else if (ptg instanceof FuncVarPtg) {
-                        edgeType = EdgeType.FUNCTION;
-                    } else if (ptg instanceof IntersectionPtg || ptg instanceof UnionPtg) {
-                        edgeType = EdgeType.SETOPERATION;
-                    } else {
-                        if (ptg instanceof AttrPtg) {
-                            edgeType = EdgeType.FUNCTION;
-                        } else {
-                            edgeType = EdgeType.OTHER;
-                        }
-                    }
-
-                    int count = 0;
-                    while (count < numberOfOperands && !precDeque.isEmpty()) {
-                        Ref popRef = precDeque.pop();
-                        popRef.setEdgeType(edgeType);
-                        precList.add(popRef);
-                        count += 1;
-                    }
-                }
-            }
-
-            while (!precDeque.isEmpty()) {
-                Ref popRef = precDeque.pop();
-                precList.add(popRef);
             }
 
             if (!precList.isEmpty())
                 sheetData.addDeps(dep, precList);
             sheetData.addFormulaNumRef(dep, numRefs);
             CellContent cellContent = new CellContent("",
-                    cell.getCellFormula(), true);
+                    cell.getCellFormula(), formulaTokens.toArray(new FormulaToken[0]), true);
             sheetData.addContent(dep, cellContent);
         } catch (SheetNotSupportedException e) {
-            CellContent cellContent = new CellContent("",
-                    "", false);
-            sheetData.addContent(dep, cellContent);
+            // CellContent cellContent = new CellContent("",
+            //         "", null, false);
+            // sheetData.addContent(dep, cellContent);
         }
     }
 
@@ -323,7 +299,7 @@ public class POIParser implements SpreadsheetParser {
             }
         }
 
-        return null;
+        throw new SheetNotSupportedException();
     }
 
     private Sheet getDependentSheet (Cell src, OperandPtg opPtg) throws SheetNotSupportedException {

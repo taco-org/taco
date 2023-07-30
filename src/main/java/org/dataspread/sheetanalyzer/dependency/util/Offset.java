@@ -6,8 +6,8 @@ public class Offset {
 
     public static Offset noOffset = new Offset(0, 0);
 
-    private int rowOffset;
-    private int colOffset;
+    private final int rowOffset;
+    private final int colOffset;
 
     public Offset(int rowOffset,
                   int colOffset) {
