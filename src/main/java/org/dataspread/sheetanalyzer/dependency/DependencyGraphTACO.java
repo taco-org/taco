@@ -591,8 +591,8 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
                     // RR
                     if (isCompressibleTypeOne(lastCandPrec, prec, direction)) {
                         compressType = PatternType.TYPEONE;
-                        if (isCompressibleTypeZero(prec, dep, lastCandPrec))
-                            compressType = PatternType.TYPEZERO;
+                        // if (isCompressibleTypeZero(prec, dep, lastCandPrec))
+                        //    compressType = PatternType.TYPEZERO;
                     }
                 } else {
                     // RF
@@ -618,8 +618,8 @@ public class DependencyGraphTACO implements DependencyGraph, Serializable {
         if (compressType == PatternType.NOTYPE) {
             if (isCompressibleTypeOne(lastCandPrec, prec, direction)) {
                 compressType = PatternType.TYPEONE;
-                if (isCompressibleTypeZero(prec, dep, lastCandPrec))
-                    compressType = PatternType.TYPEZERO;
+                // if (isCompressibleTypeZero(prec, dep, lastCandPrec))
+                //    compressType = PatternType.TYPEZERO;
             } else if (isCompressibleTypeTwo(lastCandPrec, prec, direction))
                 compressType = PatternType.TYPETWO;
             else if (isCompressibleTypeThree(lastCandPrec, prec, direction))

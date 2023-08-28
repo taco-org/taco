@@ -112,11 +112,11 @@ public class MainTestUtil {
     public static void TestRefDependent(PrintWriter statPW, String fileDir, String fileName,
                                         String refLoc, boolean isDollar, boolean isGap, boolean isTypeSensitive) {
         boolean inRowCompression = false;
-        boolean isCompression = false;
+        boolean isCompression = true;
         String filePath = fileDir + "/" + fileName;
 
         try {
-            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression, isDollar, isGap, true);
+            SheetAnalyzer sheetAnalyzer = new SheetAnalyzerImpl(filePath, isCompression, inRowCompression, isDollar, isGap, isTypeSensitive);
             long graphBuildTime = sheetAnalyzer.getGraphBuildTimeCost();
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append(fileName).append(",")

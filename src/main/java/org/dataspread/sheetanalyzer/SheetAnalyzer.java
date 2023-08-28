@@ -91,7 +91,7 @@ public abstract class SheetAnalyzer {
      * @param ref
      * @return
      */
-    public abstract Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref);
+    public abstract Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref, boolean isDirect);
 
     /**
      * Get the set of precedents of a reference {@link Ref}
@@ -109,7 +109,7 @@ public abstract class SheetAnalyzer {
      * @param ref
      * @return
      */
-    public abstract Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref);
+    public abstract Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref, boolean isDirect);
 
     /**
      * Get the full information of a TACO graph

@@ -52,12 +52,12 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent) throws SheetNotSupportedException {
-        this(sheetContent, true, false, true, false, true);
+        this(sheetContent, true, false, true, false, false);
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent, boolean isCompression)
             throws SheetNotSupportedException {
-        this(sheetContent, isCompression, false, true, false, true);
+        this(sheetContent, isCompression, false, true, false, false);
     }
 
     public SheetAnalyzerImpl(Map<String, String[][]> sheetContent,
@@ -184,7 +184,7 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
 
     @Override
     public Set<Ref> getDependents(String sheetName, Ref ref) {
-        Map<Ref, List<RefWithMeta>> dependentsSubGraph = getDependentsSubGraph(sheetName, ref);
+        Map<Ref, List<RefWithMeta>> dependentsSubGraph = getDependentsSubGraph(sheetName, ref, false);
         Set<Ref> resultSet = new HashSet<>();
         for (Ref key: dependentsSubGraph.keySet()) {
             List<RefWithMeta> dependentsList = dependentsSubGraph.get(key);
@@ -197,13 +197,13 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
     }
 
     @Override
-    public Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref) {
-        return depGraphMap.get(sheetName).getDependents(ref, false);
+    public Map<Ref, List<RefWithMeta>> getDependentsSubGraph(String sheetName, Ref ref, boolean isDirect) {
+        return depGraphMap.get(sheetName).getDependents(ref, isDirect);
     }
 
     @Override
     public Set<Ref> getPrecedents(String sheetName, Ref ref) {
-        Map<Ref, List<RefWithMeta>> precedentsSubGraph = getPrecedentsSubGraph(sheetName, ref);
+        Map<Ref, List<RefWithMeta>> precedentsSubGraph = getPrecedentsSubGraph(sheetName, ref, false);
         Set<Ref> resultSet = new HashSet<>();
         for (Ref key: precedentsSubGraph.keySet()) {
             List<RefWithMeta> precedentsList = precedentsSubGraph.get(key);
@@ -216,8 +216,8 @@ public class SheetAnalyzerImpl extends SheetAnalyzer {
     }
 
     @Override
-    public Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref) {
-        return depGraphMap.get(sheetName).getPrecedents(ref, false);
+    public Map<Ref, List<RefWithMeta>> getPrecedentsSubGraph(String sheetName, Ref ref, boolean isDirect) {
+        return depGraphMap.get(sheetName).getPrecedents(ref, isDirect);
     }
 
     @Override
