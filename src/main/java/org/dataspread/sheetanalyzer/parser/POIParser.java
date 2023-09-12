@@ -201,8 +201,7 @@ public class POIParser implements SpreadsheetParser {
                     Arrays.fill(operands, "");
 
                     String funcStr = operationPtg.toFormulaString(operands).replaceAll("[,()]+$", "");
-                    if (funcStr.compareToIgnoreCase("#REF!") == 0 ||
-                            funcStr.compareToIgnoreCase("#Value!") == 0)
+                    if (funcStr.startsWith("#")) // A formula indicating an error
                         return;
                     formulaTokens.add(new FormulaToken(null, funcStr, numOperands));
                 } else if (ptg instanceof ScalarConstantPtg) {

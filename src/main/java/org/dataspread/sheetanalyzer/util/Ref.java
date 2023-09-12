@@ -40,6 +40,9 @@ public interface Ref {
 	void setConstant(boolean isConstant);
 	boolean isConstant();
 
+	void setRefFuncID(int funcID);
+	int getRefFuncID();
+
 	// ADD: interface for dollar setting and checking
 	void setLeftUpColumnDollar();
 	void setLeftUpRowDollar();

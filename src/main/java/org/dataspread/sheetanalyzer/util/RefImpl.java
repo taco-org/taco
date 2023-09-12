@@ -37,6 +37,7 @@ public class RefImpl implements Ref, Serializable {
 
 	private boolean isIntermediate = false;
 	private boolean isConstant = false;
+	private int refFuncID = -1;
 
 	@SuppressWarnings("unused")
 	public RefImpl() {
@@ -196,6 +197,16 @@ public class RefImpl implements Ref, Serializable {
 	@Override
 	public boolean isConstant() {
 		return this.isConstant;
+	}
+
+	@Override
+	public void setRefFuncID(int refFuncID) {
+		this.refFuncID = refFuncID;
+	}
+
+	@Override
+	public int getRefFuncID() {
+		return refFuncID;
 	}
 
 	@Override
