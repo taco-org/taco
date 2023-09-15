@@ -12,13 +12,16 @@ import static org.dataspread.sheetanalyzer.dependency.util.PatternTools.*;
 public class ColumnPattern {
     private Ref dep;
     private final FormulaToken[] formulaTokens;
+    private final FormulaToken[] firstFormulaTokens;
     private final EdgeMeta[] edgeMetas;
 
     public ColumnPattern(Ref dep, FormulaToken[] formulaTokens) {
         this.dep = dep;
         this.formulaTokens = formulaTokens;
+        this.firstFormulaTokens = new FormulaToken[formulaTokens.length];
         this.edgeMetas = new EdgeMeta[formulaTokens.length];
         for (int i = 0; i < this.formulaTokens.length; i++) {
+            this.firstFormulaTokens[i] = this.formulaTokens[i];
             if (this.formulaTokens[i].isRef()) {
                 Ref ref = this.formulaTokens[i].getRef();
 
@@ -34,6 +37,10 @@ public class ColumnPattern {
 
     public FormulaToken[] getFormulaTokens() {
         return formulaTokens;
+    }
+
+    public FormulaToken[] getFirstFormulaTokens() {
+        return firstFormulaTokens;
     }
 
     public EdgeMeta[] getEdgeMetas() {

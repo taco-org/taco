@@ -57,27 +57,31 @@ public class SheetStatsCollector {
     }
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            String warnings = "To run SheetStatsCollector, we need 3 arguments: \n" +
+        if (args.length != 4) {
+            String warnings = "To run SheetStatsCollector, we need 4 arguments: \n" +
                     "1) Spreadsheet path \n" +
-                    "2) Folder path for the output result \n" +
-                    "3) Threshold for recognizing a pattern \n";
+                    "2) Dataset name \n" +
+                    "3) Folder path for the output result \n" +
+                    "4) Threshold for recognizing a pattern \n";
             System.out.println(warnings);
             System.exit(-1);
         }
 
         String filePath = args[0];
-        String outputFolder = args[1];
-        int threshold = Integer.parseInt(args[2]);
+        String dsName = args[1];
+        String outputFolder = args[2];
+        int threshold = Integer.parseInt(args[3]);
+
+        File file = new File(filePath);
+        String ssName = file.getName();
 
         SheetStatsCollector sheetStatsCollector;
 
         StatsCollector[] statsCollectors = {
-                new FuncDistCollector(outputFolder),
-                new FuncDistPerCaseCollector(outputFolder)
+                new BasicInfoCollector(outputFolder, ssName, dsName),
+                // new FuncDistCollector(outputFolder),
+                // new FuncDistPerCaseCollector(outputFolder)
         };
-
-        File file = new File(filePath);
 
         try {
             //s System.out.printf("Processing %s\n", file.getName());

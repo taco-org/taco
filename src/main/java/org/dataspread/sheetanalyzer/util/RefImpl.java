@@ -37,7 +37,7 @@ public class RefImpl implements Ref, Serializable {
 
 	private boolean isIntermediate = false;
 	private boolean isConstant = false;
-	private String scalarValue;
+	private String scalarValue = "";
 	private int refFuncID = -1;
 
 	@SuppressWarnings("unused")
