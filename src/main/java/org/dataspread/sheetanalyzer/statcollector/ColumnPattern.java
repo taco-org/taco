@@ -110,4 +110,20 @@ public class ColumnPattern {
                 inputPrec, inputDep, candPrec, candDep, metaData);
     }
 
+    public String getTemplateString() {
+        StringBuilder sb = new StringBuilder();
+        for (FormulaToken ft : this.formulaTokens) {
+            sb.append(ft.toString());
+        }
+        return sb.toString();
+    }
+
+    public int getNumFunc() {
+        int numFunc = 0;
+        for (FormulaToken ft : this.formulaTokens) {
+            if (!ft.isRef()) numFunc += 1;
+        }
+        return numFunc;
+    }
+
 }

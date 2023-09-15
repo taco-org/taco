@@ -39,6 +39,8 @@ public interface Ref {
 
 	void setConstant(boolean isConstant);
 	boolean isConstant();
+	void setScalarValue(String value);
+	String getScalarValue();
 
 	void setRefFuncID(int funcID);
 	int getRefFuncID();

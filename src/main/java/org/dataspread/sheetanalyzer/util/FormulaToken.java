@@ -26,4 +26,15 @@ public class FormulaToken {
     public boolean isRef() {
         return ref != null;
     }
+
+    @Override
+    public String toString() {
+       if (isRef()) {
+           if (ref.isConstant()) return ref.getScalarValue();
+           else return ref.toString();
+       } else {
+           return functionStr;
+       }
+    }
+
 }

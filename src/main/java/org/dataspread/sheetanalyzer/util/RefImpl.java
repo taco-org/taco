@@ -37,6 +37,7 @@ public class RefImpl implements Ref, Serializable {
 
 	private boolean isIntermediate = false;
 	private boolean isConstant = false;
+	private String scalarValue;
 	private int refFuncID = -1;
 
 	@SuppressWarnings("unused")
@@ -197,6 +198,16 @@ public class RefImpl implements Ref, Serializable {
 	@Override
 	public boolean isConstant() {
 		return this.isConstant;
+	}
+
+	@Override
+	public void setScalarValue(String value) {
+		this.scalarValue = value;
+	}
+
+	@Override
+	public String getScalarValue() {
+		return this.scalarValue;
 	}
 
 	@Override

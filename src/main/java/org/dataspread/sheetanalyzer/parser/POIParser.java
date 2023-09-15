@@ -207,6 +207,7 @@ public class POIParser implements SpreadsheetParser {
                 } else if (ptg instanceof ScalarConstantPtg) {
                     Ref prec = new RefImpl(0, 0);
                     prec.setConstant(true);
+                    prec.setScalarValue(ptg.toFormulaString());
                     formulaTokens.add(new FormulaToken(prec, "", 0));
                 } else {
                    return;
