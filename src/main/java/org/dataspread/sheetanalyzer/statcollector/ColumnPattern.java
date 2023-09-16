@@ -119,7 +119,7 @@ public class ColumnPattern {
 
     public String getTemplateString() {
         StringBuilder sb = new StringBuilder();
-        for (FormulaToken ft : this.formulaTokens) {
+        for (FormulaToken ft : this.firstFormulaTokens) {
             sb.append(ft.toString());
         }
         return sb.toString();

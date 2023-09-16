@@ -31,6 +31,6 @@ for file in "$DATASET"/*; do
         # Print the progress
         echo "[$visited_files/$total_files]: $file"
         # Execute the test script with the current file
-        "$TEST_HOME/runOneTest.sh" "$file" "$OUTPUT_FOLDER" "$THRESHOLD"
+        "$TEST_HOME/runOneTest.sh" "$file" "$DATASET" "$OUTPUT_FOLDER" "$THRESHOLD"
     fi
 done

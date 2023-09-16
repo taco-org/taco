@@ -65,10 +65,11 @@ public class BasicInfoCollector implements StatsCollector {
             String line;
             String lastLine = null;
             while ((line = br.readLine()) != null) {
-                lastLine = line;
+                if (!line.startsWith(newline))
+                    lastLine = line;
             }
             if (lastLine != null)
-                return Integer.parseInt(lastLine.split(del)[0]);
+                return Integer.parseInt(lastLine.split(del)[0]) + 1;
             else
                 return startID;
         }
@@ -87,7 +88,7 @@ public class BasicInfoCollector implements StatsCollector {
              BufferedWriter refBW = new BufferedWriter(new FileWriter(createFilePath(statFolder, refFile), true))
              ) {
             // Write to the SpreadSheet file
-            ssBW.write(ssID + del + ssName + del + dsName + newline);
+            ssBW.write(ssID + del + "\"" + ssName + "\"" + del + dsName + newline);
 
             int templateID = startID;
             for (ColumnPattern cp : cpList) {
@@ -118,17 +119,17 @@ public class BasicInfoCollector implements StatsCollector {
                             EdgeMeta em = refWithMeta.getEdgeMeta();
                             Ref ref = refWithMeta.getRef();
                             refBW.write(ssID + del + templateID + del + funcID + del + refID + del + refWithMeta.getPatternType() + del
-                                    + em.startOffset.getRowOffset() + del + em.startOffset.getColOffset() + del
-                                    + em.endOffset.getRowOffset() + del + em.endOffset.getColOffset() + del
+                                    + ref.getRow() + del + ref.getColumn() + del
+                                    + ref.getLastRow() + del + ref.getLastColumn() + del
                                     + ref.getScalarValue() + del + ref.isIntermediate() + del + ref.getRefFuncID() + newline);
                             refID += 1;
                         }
 
                         Ref interRef;
                         if (Arrays.stream(rangeFunctions).anyMatch(rangFunc -> rangFunc.compareToIgnoreCase(funcStr) == 0)) {
-                            interRef = new RefImpl(1, 1, 2, 2);
+                            interRef = new RefImpl(0, 0, 1, 1);
                         } else {
-                            interRef = new RefImpl(1, 1, 1, 1);
+                            interRef = new RefImpl(0, 0, 0, 0);
                         }
                         interRef.setIntermediate(true);
 
