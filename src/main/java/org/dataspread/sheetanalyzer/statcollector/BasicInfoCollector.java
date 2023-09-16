@@ -118,7 +118,7 @@ public class BasicInfoCollector implements StatsCollector {
                         for (RefWithMeta refWithMeta : refWithMetaList) {
                             EdgeMeta em = refWithMeta.getEdgeMeta();
                             Ref ref = refWithMeta.getRef();
-                            refBW.write(ssID + del + templateID + del + funcID + del + refID + del + refWithMeta.getPatternType() + del
+                            refBW.write(ssID + del + templateID + del + funcID + del + refID + del + refWithMeta.getPatternType().label + del
                                     + ref.getRow() + del + ref.getColumn() + del
                                     + ref.getLastRow() + del + ref.getLastColumn() + del
                                     + ref.getScalarValue() + del + ref.isIntermediate() + del + ref.getRefFuncID() + newline);

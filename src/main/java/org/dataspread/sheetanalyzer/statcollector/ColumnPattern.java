@@ -120,7 +120,7 @@ public class ColumnPattern {
     public String getTemplateString() {
         StringBuilder sb = new StringBuilder();
         for (FormulaToken ft : this.firstFormulaTokens) {
-            sb.append(ft.toString());
+            sb.append(ft.toString()).append(" ");
         }
         return sb.toString();
     }

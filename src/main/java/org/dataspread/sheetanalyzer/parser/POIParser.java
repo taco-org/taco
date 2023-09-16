@@ -204,6 +204,13 @@ public class POIParser implements SpreadsheetParser {
                     if (funcStr.startsWith("#")) // A formula indicating an error
                         return;
                     formulaTokens.add(new FormulaToken(null, funcStr, numOperands));
+                } else if (ptg instanceof AttrPtg) {
+                    AttrPtg attrPtg = (AttrPtg) ptg;
+                    String[] operands = new String[1];
+                    Arrays.fill(operands, "");
+
+                    String funcStr = attrPtg.toFormulaString(operands).replaceAll("[,()]+$", "");
+                    formulaTokens.add(new FormulaToken(null, funcStr, 1));
                 } else if (ptg instanceof ScalarConstantPtg) {
                     Ref prec = new RefImpl(0, 0);
                     prec.setConstant(true);
