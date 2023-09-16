@@ -35,12 +35,12 @@ public class SheetStatsCollector {
                 CellContent cellContent = entry.getValue();
                 if (cellContent.getFormulaTokens() != null) {
                     if (columnPattern.get() == null)
-                        columnPattern.set(new ColumnPattern(dep, cellContent.getFormulaTokens()));
+                        columnPattern.set(new ColumnPattern(dep, cellContent.getFormula(), cellContent.getFormulaTokens()));
                     else {
                         boolean compressible = columnPattern.get().compressOneFormula(dep, cellContent.getFormulaTokens());
                         if (!compressible) {
                             collectStatsHelper(statsCollectors, columnPattern.get());
-                            columnPattern.set(new ColumnPattern(dep, cellContent.getFormulaTokens()));
+                            columnPattern.set(new ColumnPattern(dep, cellContent.getFormula(), cellContent.getFormulaTokens()));
                         }
                     }
                 }

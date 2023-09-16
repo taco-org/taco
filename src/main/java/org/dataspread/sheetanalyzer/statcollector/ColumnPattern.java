@@ -11,12 +11,14 @@ import static org.dataspread.sheetanalyzer.dependency.util.PatternTools.*;
 
 public class ColumnPattern {
     private Ref dep;
+    private final String firstFormula;
     private final FormulaToken[] formulaTokens;
     private final FormulaToken[] firstFormulaTokens;
     private final EdgeMeta[] edgeMetas;
 
-    public ColumnPattern(Ref dep, FormulaToken[] formulaTokens) {
+    public ColumnPattern(Ref dep, String formula, FormulaToken[] formulaTokens) {
         this.dep = dep;
+        this.firstFormula = formula;
         this.formulaTokens = formulaTokens;
         this.firstFormulaTokens = new FormulaToken[formulaTokens.length];
         this.edgeMetas = new EdgeMeta[formulaTokens.length];
@@ -118,11 +120,12 @@ public class ColumnPattern {
     }
 
     public String getTemplateString() {
-        StringBuilder sb = new StringBuilder();
-        for (FormulaToken ft : this.firstFormulaTokens) {
-            sb.append(ft.toString()).append(" ");
-        }
-        return sb.toString();
+        // StringBuilder sb = new StringBuilder();
+        // for (FormulaToken ft : this.firstFormulaTokens) {
+        //     sb.append(ft.toString()).append(" ");
+        // }
+        // return sb.toString();
+        return firstFormula;
     }
 
     public int getNumFunc() {

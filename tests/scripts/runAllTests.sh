@@ -13,7 +13,7 @@ fi
 DATASET="$1"
 DSNAME="$2"
 OUTPUT_FOLDER="$3"
-THRESHOLD=10
+THRESHOLD=100
 
 # Count the total number of files in the dataset folder
 total_files=$(find "$DATASET" -type f | wc -l)
