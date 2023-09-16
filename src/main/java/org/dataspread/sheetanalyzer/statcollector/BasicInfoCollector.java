@@ -96,7 +96,8 @@ public class BasicInfoCollector implements StatsCollector {
                 // Write to the Template file
                 String templateStr = cp.getTemplateString();
                 int numFunc = cp.getNumFunc();
-                templateBW.write(ssID + del + templateID + del + templateStr + del + numFunc + newline);
+                int numCells = cp.getNumCells();
+                templateBW.write(ssID + del + templateID + del + templateStr + del + numFunc + del + numCells + newline);
 
                 // Write to the Function and Ref files
                 int funcID = startID;
