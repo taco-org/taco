@@ -132,6 +132,7 @@ public class BasicInfoCollector implements StatsCollector {
                             interRef = new RefImpl(0, 0, 0, 0);
                         }
                         interRef.setIntermediate(true);
+                        interRef.setRefFuncID(funcID);
 
                         EdgeMeta edgeMeta = new EdgeMeta(PatternType.TYPEONE,
                                 new Offset(1, 1),

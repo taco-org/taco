@@ -5,13 +5,14 @@ ABS_PATH="$(readlink -f "${BASH_SOURCE}")"
 TEST_HOME="$(dirname "$ABS_PATH")"
 
 # Check if the script is invoked with the correct number of parameters
-if [ "$#" -ne 2 ]; then
-    echo "Need two parameters: [dataset folder] [output folder]"
+if [ "$#" -ne 3 ]; then
+    echo "Need three parameters: [dataset folder] [dataset name] [output folder]"
     exit 1
 fi
 
 DATASET="$1"
-OUTPUT_FOLDER="$2"
+DSNAME="$2"
+OUTPUT_FOLDER="$3"
 THRESHOLD=10
 
 # Count the total number of files in the dataset folder
@@ -31,6 +32,6 @@ for file in "$DATASET"/*; do
         # Print the progress
         echo "[$visited_files/$total_files]: $file"
         # Execute the test script with the current file
-        "$TEST_HOME/runOneTest.sh" "$file" "$DATASET" "$OUTPUT_FOLDER" "$THRESHOLD"
+        "$TEST_HOME/runOneTest.sh" "$file" "$DSNAME" "$OUTPUT_FOLDER" "$THRESHOLD"
     fi
 done
