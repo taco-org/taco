@@ -11,11 +11,9 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFEvaluationWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.dataspread.sheetanalyzer.util.*;
-import org.dataspread.sheetanalyzer.dependency.util.EdgeType;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class POIParser implements SpreadsheetParser {
@@ -128,7 +126,7 @@ public class POIParser implements SpreadsheetParser {
         for (Row row : sheet) {
             for (Cell cell : row) {
                 if (cell.getColumnIndex() > maxCols) maxCols = cell.getColumnIndex();
-                if (cell.getCellType() == CellType.FORMULA) {
+                if (cell.getCellType() == CellType.FORMULA && !cell.getCellFormula().startsWith("#")) {
                     parseOneFormulaCell(sheetData, cell);
                 }
             }
@@ -187,7 +185,9 @@ public class POIParser implements SpreadsheetParser {
             ArrayList<FormulaToken> formulaTokens = new ArrayList<>();
 
             for (Ptg ptg: tokens) {
-                if (ptg instanceof OperandPtg) {
+                if (ptg instanceof NameXPxg) {
+                    return;
+                } else if (ptg instanceof OperandPtg) {
                     Ref prec = parseOneToken(cell, (OperandPtg) ptg, sheetData);
                     prec.setConstant(false);
                     precList.add(prec);
@@ -260,31 +260,31 @@ public class POIParser implements SpreadsheetParser {
                     areaRef.setRightDownRowDollar();
                 }
 
-                if (!sheetData.areaAccessed(areaRef)) {
-                    sheetData.addOneAccess(areaRef);
-                    for (int r = ptg.getFirstRow(); r <= ptg.getLastRow(); r++) {
-                        for (int c = ptg.getFirstColumn(); c <= ptg.getLastColumn(); c++) {
-                            Cell dep = this.getCellAt(sheet, r, c);
-                            if (dep == null) {
-                                Ref cellRef = new RefImpl(r, c);
-                                if (sheetData.getCellContent(cellRef) == null) {
-                                    sheetData.addContent(cellRef,
-                                            CellContent.getNullCellContent());
-                                }
-                            }
-                        }
-                    }
-                }
+                // if (!sheetData.areaAccessed(areaRef)) {
+                //     sheetData.addOneAccess(areaRef);
+                //     for (int r = ptg.getFirstRow(); r <= ptg.getLastRow(); r++) {
+                //         for (int c = ptg.getFirstColumn(); c <= ptg.getLastColumn(); c++) {
+                //             Cell dep = this.getCellAt(sheet, r, c);
+                //             if (dep == null) {
+                //                 Ref cellRef = new RefImpl(r, c);
+                //                 if (sheetData.getCellContent(cellRef) == null) {
+                //                     sheetData.addContent(cellRef,
+                //                             CellContent.getNullCellContent());
+                //                 }
+                //             }
+                //         }
+                //     }
+                // }
                 return areaRef;
             } else if (token instanceof RefPtg) {
                 RefPtg ptg = (RefPtg) token;
                 int row = ptg.getRow();
                 int col = ptg.getColumn();
-                Cell dep = this.getCellAt(sheet, row, col);
-                if (dep == null) {
-                    sheetData.addContent(new RefImpl(row, col),
-                            CellContent.getNullCellContent());
-                }
+                // Cell dep = this.getCellAt(sheet, row, col);
+                // if (dep == null) {
+                //     sheetData.addContent(new RefImpl(row, col),
+                //             CellContent.getNullCellContent());
+                // }
 
                 Ref new_ref = new RefImpl(row, col, row, col);
                 // ADD: Set dollar sign
