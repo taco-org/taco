@@ -19,7 +19,7 @@ THRESHOLD=100
 total_files=$(find "$DATASET" -type f | wc -l)
 
 # Clear the output folder before running the test
-rm -rf "$OUTPUT_FOLDER"/*
+# rm -rf "$OUTPUT_FOLDER"/*
 
 # Initialize a variable to count the number of files visited
 visited_files=0
