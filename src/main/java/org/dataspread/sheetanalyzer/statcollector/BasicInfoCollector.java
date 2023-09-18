@@ -94,7 +94,7 @@ public class BasicInfoCollector implements StatsCollector {
             for (ColumnPattern cp : cpList) {
 
                 // Write to the Template file
-                String templateStr = cp.getTemplateString();
+                String templateStr = cp.getTemplateString().replaceAll("\\n", "");
                 int numFunc = cp.getNumFunc();
                 int numCells = cp.getNumCells();
                 templateBW.write(ssID + del + templateID + del + templateStr + del + numFunc + del + numCells + newline);
