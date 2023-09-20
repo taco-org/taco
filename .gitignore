@@ -2,7 +2,7 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # Notebook
-.ipynb_checkpoints
+#.ipynb_checkpoints
 
 # xls/xlsx files
 .xls
