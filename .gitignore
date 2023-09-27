@@ -3,6 +3,7 @@
 
 # Notebook
 .ipynb_checkpoints
+.virtual_documents
 
 # xls/xlsx files
 .xls
